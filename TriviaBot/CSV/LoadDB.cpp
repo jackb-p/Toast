@@ -7,9 +7,10 @@
 
 /**
 / Takes the questions stored in the CSV downloaded from https://www.reddit.com/r/trivia/comments/3wzpvt/free_database_of_50000_trivia_questions/
-/ Questions are stored in a weird format, which makes it a lot harder.
+/ Questions are stored in a weird format, which makes it a lot harder. To make it easier to process them, I replaced any double commas with single commas,
+/	and renamed the repeated headers to Category1, Category2, Question1, etc... There was also one question with incorrect escaping which was fixed manually.
+
 / Hideous code, but only needs to be run one time.
-/ 
 **/
 
 static int callback(void *x, int argc, char **argv, char **azColName) {
@@ -25,7 +26,7 @@ int main(int argc, char* argv[]) {
 	char *zErrMsg = 0;
 	int rc;
 
-	rc = sqlite3_open("test.db", &db);
+	rc = sqlite3_open("../trivia.db", &db);
 
 	if (rc) {
 		std::cerr << "Can't open database: " << sqlite3_errmsg(db) << std::endl;
@@ -42,6 +43,7 @@ int main(int argc, char* argv[]) {
 	sqlite3_stmt *insertThreeQuestions;
 	std::string sql;
 	while (in.read_row(c0, q0, a0, c1, q1, a1, c2, q2, a2)) {
+		// Process three at a time because why not?
 		sql = "INSERT INTO Questions (Category, Question, Answer) VALUES (?1, ?2, ?3), (?4, ?5, ?6), (?7, ?8, ?9);";
 		sqlite3_prepare_v2(db, sql.c_str(), -1, &insertThreeQuestions, NULL);
 		sqlite3_bind_text(insertThreeQuestions, 1, c0.c_str(), -1, ((sqlite3_destructor_type)-1));
