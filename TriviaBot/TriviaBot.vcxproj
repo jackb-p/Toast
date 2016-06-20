@@ -69,20 +69,20 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>C:\Users\Jack\Documents\Visual Studio 2015\Projects\TriviaBot\lib\sqlite3;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Users\Jack\Documents\Visual Studio 2015\Projects\TriviaBot\lib\sqlite3;C:\Users\Jack\Documents\GitHubVisualStudio\TriviaDiscord\lib\curl\include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\Users\Jack\Documents\Visual Studio 2015\Projects\TriviaBot\lib\sqlite3\x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>C:\Users\Jack\Documents\Visual Studio 2015\Projects\TriviaBot\lib\sqlite3;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Users\Jack\Documents\Visual Studio 2015\Projects\TriviaBot\lib\sqlite3;C:\Users\Jack\Documents\GitHubVisualStudio\TriviaDiscord\lib\curl\include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\Users\Jack\Documents\Visual Studio 2015\Projects\TriviaBot\lib\sqlite3\x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LibraryPath>C:\Users\Jack\Documents\Visual Studio 2015\Projects\TriviaBot\lib\sqlite3\x86;$(LibraryPath)</LibraryPath>
-    <IncludePath>C:\Users\Jack\Documents\Visual Studio 2015\Projects\TriviaBot\lib\sqlite3;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Users\Jack\Documents\Visual Studio 2015\Projects\TriviaBot\lib\sqlite3;C:\Users\Jack\Documents\GitHubVisualStudio\TriviaDiscord\lib\curl\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LibraryPath>C:\Users\Jack\Documents\Visual Studio 2015\Projects\TriviaBot\lib\sqlite3\x86;$(LibraryPath)</LibraryPath>
-    <IncludePath>C:\Users\Jack\Documents\Visual Studio 2015\Projects\TriviaBot\lib\sqlite3;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Users\Jack\Documents\Visual Studio 2015\Projects\TriviaBot\lib\sqlite3;C:\Users\Jack\Documents\GitHubVisualStudio\TriviaDiscord\lib\curl\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -141,13 +141,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="TriviaBot.cpp" />
+    <ClCompile Include="bot\TriviaBot.cpp" />
     <ClCompile Include="CSV\LoadDB.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\..\..\AppData\Local\Temp\Rar$DRa0.635\fast-cpp-csv-parser-master\LICENSE" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="bot\simplewebsocket\client_ws.hpp" />
+    <ClInclude Include="bot\simplewebsocket\client_wss.hpp" />
+    <ClInclude Include="bot\simplewebsocket\crypto.hpp" />
+    <ClInclude Include="bot\simplewebsocket\server_ws.hpp" />
+    <ClInclude Include="bot\simplewebsocket\server_wss.hpp" />
     <ClInclude Include="CSV\csv.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

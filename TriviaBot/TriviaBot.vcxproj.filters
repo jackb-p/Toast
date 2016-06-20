@@ -21,12 +21,27 @@
     <ClInclude Include="CSV\csv.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="bot\simplewebsocket\server_wss.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="bot\simplewebsocket\server_ws.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="bot\simplewebsocket\crypto.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="bot\simplewebsocket\client_wss.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="bot\simplewebsocket\client_ws.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CSV\LoadDB.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TriviaBot.cpp">
+    <ClCompile Include="bot\TriviaBot.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

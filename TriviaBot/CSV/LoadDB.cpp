@@ -21,7 +21,7 @@ static int callback(void *x, int argc, char **argv, char **azColName) {
 	return 0;
 }
 
-int main(int argc, char* argv[]) {
+int loadDB() {
 	sqlite3 *db;
 	char *zErrMsg = 0;
 	int rc;
@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
 
 	if (rc) {
 		std::cerr << "Can't open database: " << sqlite3_errmsg(db) << std::endl;
-		return(0);
+		return 1;
 	}
 	else {
 		std::cout << "Opened database successfully" << std::endl;
@@ -58,7 +58,6 @@ int main(int argc, char* argv[]) {
 
 		int result = sqlite3_step(insertThreeQuestions);
 		std::cout << result << " ";
-
 	}
 	std::cout << std::endl;
 
