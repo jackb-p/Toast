@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
 	char *zErrMsg = 0;
 	int rc;
 
-	rc = sqlite3_open("../trivia.db", &db);
+	rc = sqlite3_open("../db/trivia.db", &db);
 
 	if (rc) {
 		std::cerr << "Can't open database: " << sqlite3_errmsg(db) << std::endl;
