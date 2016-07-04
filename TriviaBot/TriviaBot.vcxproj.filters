@@ -21,19 +21,13 @@
     <ClInclude Include="CSV\csv.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="bot\simplewebsocket\server_wss.hpp">
+    <ClInclude Include="bot\HTTPHelper.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="bot\simplewebsocket\server_ws.hpp">
+    <ClInclude Include="bot\ProtocolHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="bot\simplewebsocket\crypto.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="bot\simplewebsocket\client_wss.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="bot\simplewebsocket\client_ws.hpp">
+    <ClInclude Include="bot\json\json.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -42,6 +36,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="bot\TriviaBot.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="bot\Source.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="bot\HTTPHelper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="bot\ClientConnection.hpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
