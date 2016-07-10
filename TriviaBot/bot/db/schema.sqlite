@@ -1,0 +1,14 @@
+BEGIN TRANSACTION;
+CREATE TABLE "TotalScores" (
+	`User`	TEXT UNIQUE,
+	`TotalScore`	INTEGER,
+	`AverageTime`	INTEGER,
+	PRIMARY KEY(User)
+);
+CREATE TABLE "Questions" (
+	`ID`	INTEGER PRIMARY KEY AUTOINCREMENT,
+	`Category`	TEXT,
+	`Question`	TEXT,
+	`Answer`	TEXT
+);
+COMMIT;

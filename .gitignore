@@ -246,3 +246,5 @@ ModelManifest.xml
 
 # FAKE - F# Make
 .fake/
+/TriviaBot/data_management/questions
+/TriviaBot/bot/db/trivia.db

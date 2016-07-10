@@ -3650,7 +3650,15 @@ class basic_json
             const auto it = find(key);
             if (it != end())
             {
-                return *it;
+				try
+				{
+					return *it;
+				}
+				catch (...)
+				{
+					// if some kind of exception occurred, return default value
+					return default_value;
+				}
             }
             else
             {

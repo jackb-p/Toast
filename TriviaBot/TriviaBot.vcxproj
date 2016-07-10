@@ -21,7 +21,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{E400396F-0C05-413E-B83E-1A4F41D86442}</ProjectGuid>
     <RootNamespace>TriviaBot</RootNamespace>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.10586.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -91,9 +91,10 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CURL_STATICLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\boost_1_61_0;C:\OpenSSL-Win64\include;C:\Users\Jack\Documents\GitHubVisualStudio\TriviaDiscord\lib\liboauth\include;C:\Users\Jack\Documents\GitHubVisualStudio\TriviaDiscord\lib\curl\include;C:\buildcurl\third-party\libcurl\include;C:\Users\Jack\Documents\GitHubVisualStudio\TriviaDiscord\lib\websocketpp;C:\Users\Jack\Documents\GitHubVisualStudio\TriviaDiscord\lib\beast\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalOptions>-D_SCL_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CURL_STATICLIB;WIN32_WINNT=0x0600;URDL_NO_LIB=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\boost_1_61_0;C:\OpenSSL-Win64\include;C:\Users\Jack\Documents\GitHubVisualStudio\TriviaDiscord\lib\cpr\include;C:\Users\Jack\Documents\GitHubVisualStudio\TriviaDiscord\lib\websocketpp;C:\Users\Jack\Documents\GitHubVisualStudio\TriviaDiscord\lib\beast\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>-D_SCL_SECURE_NO_WARNINGS -DUSE_SYSTEM_CURL=OFF -D_WIN32_WINNT=0x0A00 %(AdditionalOptions)</AdditionalOptions>
+      <ObjectFileName>$(IntDir)/%(RelativeDir)/</ObjectFileName>
     </ClCompile>
     <Link>
       <AdditionalDependencies>libcurl.lib;sqlite3.lib;libeay32.lib;ssleay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -106,9 +107,10 @@
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CURL_STATICLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\boost_1_61_0;C:\OpenSSL-Win64\include;C:\Users\Jack\Documents\GitHubVisualStudio\TriviaDiscord\lib\liboauth\include;C:\Users\Jack\Documents\GitHubVisualStudio\TriviaDiscord\lib\curl\include;C:\buildcurl\third-party\libcurl\include;C:\Users\Jack\Documents\GitHubVisualStudio\TriviaDiscord\lib\websocketpp;C:\Users\Jack\Documents\GitHubVisualStudio\TriviaDiscord\lib\sqlite3;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalOptions>-D_SCL_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CURL_STATICLIB;WIN32_WINNT=0x0600;URDL_NO_LIB=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\boost_1_61_0;C:\OpenSSL-Win64\include;C:\Users\Jack\Documents\GitHubVisualStudio\TriviaDiscord\lib\cpr\include;C:\Users\Jack\Documents\GitHubVisualStudio\TriviaDiscord\lib\websocketpp;C:\Users\Jack\Documents\GitHubVisualStudio\TriviaDiscord\lib\sqlite3;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>-D_SCL_SECURE_NO_WARNINGS -DUSE_SYSTEM_CURL=OFF -D_WIN32_WINNT=0x0A00 %(AdditionalOptions)</AdditionalOptions>
+      <ObjectFileName>$(IntDir)/%(RelativeDir)/</ObjectFileName>
     </ClCompile>
     <Link>
       <AdditionalDependencies>libcurl.lib;sqlite3.lib;libeay32.lib;ssleay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -153,27 +155,38 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="bot\ClientConnection.hpp" />
-    <ClCompile Include="bot\HTTP\HTTPHelper.cpp" />
-    <ClCompile Include="bot\Source.cpp">
-      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">-D_SCL_SECURE_NO_WARNINGS
- %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">-D_SCL_SECURE_NO_WARNINGS
- %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="bot\TriviaBot.cpp">
-      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">-D_SCL_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="CSV\LoadDB.cpp" />
+    <ClCompile Include="..\lib\cpr\cpr\auth.cpp" />
+    <ClCompile Include="..\lib\cpr\cpr\cookies.cpp" />
+    <ClCompile Include="..\lib\cpr\cpr\cprtypes.cpp" />
+    <ClCompile Include="..\lib\cpr\cpr\digest.cpp" />
+    <ClCompile Include="..\lib\cpr\cpr\error.cpp" />
+    <ClCompile Include="..\lib\cpr\cpr\multipart.cpp" />
+    <ClCompile Include="..\lib\cpr\cpr\parameters.cpp" />
+    <ClCompile Include="..\lib\cpr\cpr\payload.cpp" />
+    <ClCompile Include="..\lib\cpr\cpr\proxies.cpp" />
+    <ClCompile Include="..\lib\cpr\cpr\session.cpp" />
+    <ClCompile Include="..\lib\cpr\cpr\util.cpp" />
+    <ClCompile Include="bot\APIHelper.cpp" />
+    <ClCompile Include="bot\ClientConnection.cpp" />
+    <ClInclude Include="bot\ClientConnection.hpp" />
+    <ClCompile Include="bot\GatewayHandler.cpp" />
+    <ClCompile Include="bot\http\HTTPHelper.cpp" />
+    <ClCompile Include="bot\TriviaBot.cpp" />
+    <ClCompile Include="bot\TriviaGame.cpp" />
+    <ClCompile Include="data_management\LoadDB.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\..\..\..\AppData\Local\Temp\Rar$DRa0.635\fast-cpp-csv-parser-master\LICENSE" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="bot\json\json.hpp" />
-    <ClInclude Include="bot\ProtocolHandler.h" />
+    <ClInclude Include="bot\APIHelper.hpp" />
+    <ClInclude Include="bot\data_structures\Channel.hpp" />
+    <ClInclude Include="bot\data_structures\Guild.hpp" />
+    <ClInclude Include="bot\data_structures\User.hpp" />
+    <ClInclude Include="bot\GatewayHandler.hpp" />
     <ClInclude Include="bot\HTTP\HTTPHelper.hpp" />
-    <ClInclude Include="CSV\csv.h" />
+    <ClInclude Include="bot\json\json.hpp" />
+    <ClInclude Include="bot\TriviaGame.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="bot\data_structures\Text.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

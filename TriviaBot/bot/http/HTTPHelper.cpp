@@ -1,44 +1,47 @@
 #include "HTTPHelper.hpp"
 
-size_t HTTPHelper::data_write(void* buf, size_t size, size_t nmemb, void* userp) {
-	if (userp) {
-		std::ostream& os = *static_cast<std::ostream*>(userp);
-		std::streamsize len = size * nmemb;
-		if (os.write(static_cast<char*>(buf), len)) {
-			return len;
-		}
-	}
+/*
+*  Warning: (Awful) C Code
+*/
 
-	return 0;
-}
+std::string HTTPHelper::post_request(std::string url, std::string content_type, std::string data) {
+	CURL *curl;
+	CURLcode res;
+	std::string read_buffer;
+	struct curl_slist *headers = nullptr;
 
-CURLcode HTTPHelper::curl_read(const std::string& url, std::ostream& os, long timeout = 30) {
-	CURLcode code(CURLE_FAILED_INIT);
-	CURL* curl = curl_easy_init();
-
+	curl = curl_easy_init();
 	if (curl) {
-		if (CURLE_OK == (code = curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &data_write))
-			&& CURLE_OK == (code = curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1L))
-			&& CURLE_OK == (code = curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L))
-			&& CURLE_OK == (code = curl_easy_setopt(curl, CURLOPT_FILE, &os))
-			&& CURLE_OK == (code = curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout))
-			&& CURLE_OK == (code = curl_easy_setopt(curl, CURLOPT_URL, url.c_str()))) {
-			code = curl_easy_perform(curl);
+		curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+
+		// I wonder what the S in HTTPS stands for
+		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+
+		std::string content_header = "Content-Type: " + content_type;
+		headers = curl_slist_append(headers, content_header.c_str());
+		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+
+		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
+
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &read_buffer);
+
+		res = curl_easy_perform(curl);
+
+		if (res != CURLE_OK) {
+			return "ERROR";
 		}
+
+		/* always cleanup */
 		curl_easy_cleanup(curl);
+		curl_slist_free_all(headers);
 	}
-	return code;
+
+	return read_buffer;
 }
 
-std::string HTTPHelper::read_url(std::string url) {
-	std::ostringstream oss;
-	std::string html = "ERROR";
-	if (CURLE_OK == curl_read("http://www.google.co.uk/", oss)) {
-		html = oss.str();
-	}
-	else {
-		std::cout << "CURL error" << std::endl;
-	}
-
-	return html;
+size_t HTTPHelper::write_callback(void *contents, size_t size, size_t nmemb, void *userp) {
+	((std::string *) userp)->append((char *)contents, size * nmemb);
+	return size * nmemb;
 }

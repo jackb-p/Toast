@@ -1,0 +1,125 @@
+Example data:
+
+!!!!!!!!!!!!!!!!! GUILD_CREATE Event
+{
+    "afk_channel_id": null,
+    "afk_timeout": 300,
+    "channels": [
+        {
+            "id": "200398901767962624",
+            "is_private": false,
+            "last_message_id": "201355522635595776",
+            "name": "general",
+            "permission_overwrites": [],
+            "position": 0,
+            "topic": "",
+            "type": "text"
+        },
+        {
+            "bitrate": 64000,
+            "id": "200398901767962625",
+            "is_private": false,
+            "name": "General",
+            "permission_overwrites": [],
+            "position": 0,
+            "type": "voice",
+            "user_limit": 0
+        }
+    ],
+    "default_message_notifications": 0,
+    "emojis": [],
+    "features": [],
+    "icon": null,
+    "id": "200398901767962624",
+    "joined_at": "2016-07-06T23:54:20.824000+00:00",
+    "large": false,
+    "member_count": 2,
+    "members": [
+        {
+            "deaf": false,
+            "joined_at": "2016-07-06T23:53:41.425000+00:00",
+            "mute": false,
+            "roles": [
+                "200399346498273280"
+            ],
+            "user": {
+                "avatar": "1dc076d2d273615dd23546c86dbdfd9c",
+                "discriminator": "8212",
+                "id": "82232146579689472",
+                "username": "Jack"
+            }
+        },
+        {
+            "deaf": false,
+            "joined_at": "2016-07-06T23:54:20.824000+00:00",
+            "mute": false,
+            "roles": [
+                "200399601507893248"
+            ],
+            "user": {
+                "avatar": "e871ceecaa362718af6d3174bc941977",
+                "bot": true,
+                "discriminator": "8194",
+                "id": "199657095258177539",
+                "username": "trivia-bot"
+            }
+        }
+    ],
+    "mfa_level": 0,
+    "name": "EleGiggle",
+    "owner_id": "82232146579689472",
+    "presences": [
+        {
+            "game": null,
+            "status": "online",
+            "user": {
+                "id": "82232146579689472"
+            }
+        },
+        {
+            "game": null,
+            "status": "online",
+            "user": {
+                "id": "199657095258177539"
+            }
+        }
+    ],
+    "region": "london",
+    "roles": [
+        {
+            "color": 0,
+            "hoist": false,
+            "id": "200398901767962624",
+            "managed": false,
+            "mentionable": false,
+            "name": "@everyone",
+            "permissions": 36953089,
+            "position": 0
+        },
+        {
+            "color": 3066993,
+            "hoist": true,
+            "id": "200399346498273280",
+            "managed": false,
+            "mentionable": false,
+            "name": "All Perms",
+            "permissions": 506715199,
+            "position": 1
+        },
+        {
+            "color": 15844367,
+            "hoist": true,
+            "id": "200399601507893248",
+            "managed": false,
+            "mentionable": false,
+            "name": "Robot",
+            "permissions": 536083519,
+            "position": 1
+        }
+    ],
+    "splash": null,
+    "unavailable": false,
+    "verification_level": 0,
+    "voice_states": []
+}
+
