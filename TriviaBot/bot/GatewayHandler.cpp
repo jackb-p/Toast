@@ -5,6 +5,8 @@
 #include "APIHelper.hpp"
 #include "data_structures/User.hpp"
 
+extern std::string bot_token;
+
 GatewayHandler::GatewayHandler() {
 	last_seq = 0;
 
@@ -26,8 +28,6 @@ void GatewayHandler::handle_data(std::string data, client &c, websocketpp::conne
 	case 11:
 		c.get_alog().write(websocketpp::log::alevel::app, "Heartbeat acknowledged.");
 		break;
-	default:
-		std::cout << data << std::endl;
 	}
 }
 
@@ -53,7 +53,7 @@ void GatewayHandler::heartbeat(websocketpp::lib::error_code const & ec, client *
 void GatewayHandler::on_hello(json decoded, client &c, websocketpp::connection_hdl &hdl) {
 	heartbeat_interval = decoded["d"]["heartbeat_interval"];
 
-	c.get_alog().write(websocketpp::log::alevel::app, "Heartbeat interval: " + std::to_string((float)heartbeat_interval / 1000) + " seconds");
+	c.get_alog().write(websocketpp::log::alevel::app, "Heartbeat interval: " + std::to_string(heartbeat_interval / 1000.0f) + " seconds");
 
 	c.set_timer(heartbeat_interval, websocketpp::lib::bind(
 		&GatewayHandler::heartbeat,
@@ -71,14 +71,10 @@ void GatewayHandler::on_dispatch(json decoded, client &c, websocketpp::connectio
 	std::string event_name = decoded["t"];
 	json data = decoded["d"];
 
-	c.get_alog().write(websocketpp::log::alevel::app, "Received event: " + event_name + " (new seq value: " + std::to_string(last_seq) + ")");
-
 	if (event_name == "READY") {
 		user_object.load_from_json(data["user"]);
 
 		c.get_alog().write(websocketpp::log::alevel::app, "Sign-on confirmed. (@" + user_object.username + "#" + user_object.discriminator + ")");
-
-		c.get_alog().write(websocketpp::log::alevel::app, data.dump(4));
 	}
 	else if (event_name == "GUILD_CREATE") {
 		std::string guild_id = data["id"];
@@ -92,8 +88,6 @@ void GatewayHandler::on_dispatch(json decoded, client &c, websocketpp::connectio
 			// add ptr to said channel list to guild's channel list
 			guilds[guild_id]->channels.push_back(std::shared_ptr<DiscordObjects::Channel>(channels[channel_id]));
 		}
-
-		c.get_alog().write(websocketpp::log::alevel::app, data.dump(4));
 	}
 	else if (event_name == "TYPING_START") {}
 	else if (event_name == "MESSAGE_CREATE") {
@@ -102,27 +96,49 @@ void GatewayHandler::on_dispatch(json decoded, client &c, websocketpp::connectio
 
 		DiscordObjects::User sender(data["author"]);
 
-		c.get_alog().write(websocketpp::log::alevel::app, "Message received: " + message + " $" + channel->name + " ^" + channel->id);
-
 		std::vector<std::string> words;
 		boost::split(words, message, boost::is_any_of(" "));
-		if (games.find(channel->id) != games.end()) { // message received in channel with ongoing game
-			games[channel->id]->handle_answer(message, sender);
-		} else if (words[0] == "`trivia" || words[0] == "`t") {
+		if (words[0] == "`trivia" || words[0] == "`t") {
 			int questions = 10;
-			if (words.size() == 2) {
-				try {
-					questions = std::stoi(words[1]);
-				} catch (std::invalid_argument e) {
-					ah->send_message(channel->id, ":exclamation: Invalid arguments!");
-				}
-			} else if (words.size() > 2) {
+			int delay = 8;
+
+			if (words.size() > 3) {
 				ah->send_message(channel->id, ":exclamation: Invalid arguments!");
+				return;
+			}
+			else  if(words.size() > 1) {
+				if (words[1] == "help" || words[1] == "h") {
+					std::string help = "**Base command \\`t[rivia]**. Arguments:\n";
+					help += "\\`trivia **{x}** **{y}**: Makes the game last **x** number of questions, optionally sets the time interval between hints to **y** seconds\n";
+					help += "\\`trivia **stop**: stops the ongoing game.\n";
+					help += "\\`trivia **help**: prints this message\n";
+
+					ah->send_message(channel->id, help);
+					return;
+				}
+				else if (words[1] == "stop" || words[1] == "s") {
+					if (games.find(channel->id) != games.end()) {
+						delete_game(channel->id);
+						return;
+					}
+				}
+				else {
+					try {
+						questions = std::stoi(words[1]);
+						if (words.size() == 3) {
+							delay = std::stoi(words[2]);
+						}
+					}
+					catch (std::invalid_argument e) {
+						ah->send_message(channel->id, ":exclamation: Invalid arguments!");
+						return;
+					}
+				}
 			}
 
-			games[channel->id] = std::make_unique<TriviaGame>(this, ah, channel->id, questions);
+			games[channel->id] = std::make_unique<TriviaGame>(this, ah, channel->id, questions, delay);
 			games[channel->id]->start();
-		}
+		} 
 		else if (words[0] == "`channels") {
 			std::string m = "Channel List:\n";
 			for (auto ch : channels) {
@@ -130,24 +146,26 @@ void GatewayHandler::on_dispatch(json decoded, client &c, websocketpp::connectio
 					+ guilds[ch.second->guild_id]->name + " (" + ch.second->guild_id + ")\n";
 			}
 			ah->send_message(channel->id, m);
-		} else if (words[0] == "`guilds") {
+		}
+		else if (words[0] == "`guilds") {
 			std::string m = "Guild List:\n";
 			for (auto &gu : guilds) {
 				m += "> " + gu.second->name + " (" + gu.second->id + ") Channels: " + std::to_string(gu.second->channels.size()) + "\n";
 			}
 			ah->send_message(channel->id, m);
 		}
-		c.get_alog().write(websocketpp::log::alevel::app, data.dump(2));
+		else if (games.find(channel->id) != games.end()) { // message received in channel with ongoing game
+			games[channel->id]->handle_answer(message, sender);
+		}
 	}
-	//c.get_alog().write(websocketpp::log::alevel::app, decoded.dump(2));
 }
 
 void GatewayHandler::identify(client &c, websocketpp::connection_hdl &hdl) {
 	json identify = {
 		{ "op", 2 },
-		{ "d",{
-			{ "token", TOKEN },
-			{ "properties",{
+		{ "d", {
+			{ "token", bot_token },
+			{ "properties", {
 				{ "$browser", "Microsoft Windows 10" },
 				{ "$device", "TriviaBot-0.0" },
 				{ "$referrer", "" },
@@ -155,18 +173,19 @@ void GatewayHandler::identify(client &c, websocketpp::connection_hdl &hdl) {
 			} },
 			{ "compress", false },
 			{ "large_threshold", 250 },
-			{ "shard",{ 0, 1 } }
+			{ "shard", { 0, 1 } }
 		} }
 	};
 
 	c.send(hdl, identify.dump(), websocketpp::frame::opcode::text);
-	c.get_alog().write(websocketpp::log::alevel::app, "Sent identify payload.");
+	c.get_alog().write(websocketpp::log::alevel::app, "Sent identify payload. Token: " + bot_token);
 }
 
 void GatewayHandler::delete_game(std::string channel_id) {
 	auto it = games.find(channel_id);
 
 	if (it != games.end()) {
+		it->second->interrupt();
 		// remove from map
 		games.erase(it);
 	} else {

@@ -19,17 +19,18 @@ namespace DiscordObjects {
 
 class TriviaGame {
 public:
-	TriviaGame(GatewayHandler *gh, APIHelper *ah, std::string channel_id, int total_questions);
+	TriviaGame(GatewayHandler *gh, APIHelper *ah, std::string channel_id, int total_questions, int delay);
 	~TriviaGame();
 
 	void start();
+	void interrupt();
 	void handle_answer(std::string answer, DiscordObjects::User sender);
 
 private:
 	int questions_asked;
 	int total_questions;
+	boost::posix_time::seconds interval;
 
-	void end_game();
 	void question();
 	void give_hint(int hints_given, std::string hint);
 	void question_failed();

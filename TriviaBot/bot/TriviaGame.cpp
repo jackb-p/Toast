@@ -13,7 +13,7 @@
 #include "APIHelper.hpp"
 #include "data_structures/User.hpp"
 
-TriviaGame::TriviaGame(GatewayHandler *gh, APIHelper *ah, std::string channel_id, int total_questions) {
+TriviaGame::TriviaGame(GatewayHandler *gh, APIHelper *ah, std::string channel_id, int total_questions, int delay) : interval(delay) {
 	this->gh = gh;
 	this->ah = ah;
 	this->channel_id = channel_id;
@@ -23,6 +23,11 @@ TriviaGame::TriviaGame(GatewayHandler *gh, APIHelper *ah, std::string channel_id
 }
 
 TriviaGame::~TriviaGame() {
+	if (scores.size() == 0) {
+		ah->send_message(channel_id, ":red_circle: Game cancelled!");
+		return;
+	}
+
 	std::string message = ":red_circle: **(" + std::to_string(questions_asked) + "/" + std::to_string(total_questions) + 
 		")** Game over! **Scores:**\n";
 	
@@ -33,7 +38,7 @@ TriviaGame::~TriviaGame() {
 	}
 
 	// sort by score, highest->lowest
-	std::sort(pairs.begin(), pairs.end(), [=](std::pair<std::string, int>& a, std::pair<std::string, int>& b) {
+	std::sort(pairs.begin(), pairs.end(), [=](std::pair<std::string, int> &a, std::pair<std::string, int> &b) {
 		return a.second > b.second;
 	});
 
@@ -83,7 +88,7 @@ TriviaGame::~TriviaGame() {
 		rc = sqlite3_step(stmt);
 
 		if (rc == SQLITE_ROW) {
-			std::string id = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+			std::string id = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 0));
 			int total_score = sqlite3_column_int(stmt, 1);
 			int average_time = sqlite3_column_int(stmt, 2);
 
@@ -131,7 +136,6 @@ TriviaGame::~TriviaGame() {
 	}
 
 	if (update_sql != "") {
-		std::cout << update_sql << std::endl;
 		rc = sqlite3_prepare_v2(db, update_sql.c_str(), -1, &stmt, 0);
 		if (rc != SQLITE_OK) {
 			std::cerr << "SQL error." << std::endl;
@@ -159,12 +163,12 @@ TriviaGame::~TriviaGame() {
 	sqlite3_close(db);
 }
 
-void TriviaGame::end_game() {
-	gh->delete_game(channel_id);
-}
-
 void TriviaGame::start() {
 	question();
+}
+
+void TriviaGame::interrupt() {
+	current_thread->interrupt();
 }
 
 void TriviaGame::question() {
@@ -188,10 +192,10 @@ void TriviaGame::question() {
 	rc = sqlite3_step(stmt);
 	if (rc == SQLITE_ROW) {
 		// result received
-		std::string id = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)); // converts id to string for us
-		std::string category = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
-		std::string question = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
-		std::string answer = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
+		std::string id = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 0)); // converts id to string for us
+		std::string category = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 1));
+		std::string question = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 2));
+		std::string answer = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 3));
 
 		current_question = "#" + id + " [" + category + "] **" + question + "**";
 		boost::split(current_answers, boost::algorithm::to_lower_copy(answer), boost::is_any_of("*"));
@@ -212,7 +216,7 @@ void TriviaGame::question() {
 }
 
 void TriviaGame::give_hint(int hints_given, std::string hint) {
-	boost::this_thread::sleep(boost::posix_time::seconds(10));
+	boost::this_thread::sleep(interval);
 	
 	std::string answer = *current_answers.begin();
 
@@ -225,8 +229,7 @@ void TriviaGame::give_hint(int hints_given, std::string hint) {
 		hint = boost::regex_replace(hint, regexp, std::string(1, hide_char));
 
 		print = true;
-	}
-	else {
+	} else {
 		std::stringstream hint_stream(hint);
 
 		std::random_device rd;
@@ -281,13 +284,13 @@ void TriviaGame::give_hint(int hints_given, std::string hint) {
 }
 
 void TriviaGame::question_failed() {
-	boost::this_thread::sleep(boost::posix_time::seconds(10));
+	boost::this_thread::sleep(interval);
 	ah->send_message(channel_id, ":exclamation: Question failed. Answer: ** `" + *current_answers.begin() + "` **");
 
-	if (questions_asked < 10) {
+	if (questions_asked < total_questions) {
 		question();
 	} else {
-		end_game();
+		gh->delete_game(channel_id);
 	}
 }
 
@@ -307,15 +310,11 @@ void TriviaGame::handle_answer(std::string answer, DiscordObjects::User sender) 
 		increase_score(sender.id);
 		update_average_time(sender.id, diff.total_milliseconds());
 
-		if (questions_asked < 10) {
+		if (questions_asked < total_questions) {
 			question();
 		} else {
-			end_game();
+			gh->delete_game(channel_id);
 		}
-	} else if (answer == "`s" || answer == "`stop") {
-		current_thread->interrupt();
-
-		end_game();
 	}
 }
 

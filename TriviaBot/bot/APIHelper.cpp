@@ -4,7 +4,10 @@
 
 #include "APIHelper.hpp"
 
-APIHelper::APIHelper() {
+extern std::string bot_token;
+
+APIHelper::APIHelper() : BASE_URL("https://discordapp.com/api"), CHANNELS_URL(BASE_URL + "/channels"),
+	TOKEN_PARAM("token=" + bot_token), JSON_CTYPE("application/json") {
 	http = new HTTPHelper();
 }
 
@@ -15,5 +18,5 @@ void APIHelper::send_message(std::string channel_id, std::string message) {
 	};
 
 	const std::string response = http->post_request(url, JSON_CTYPE, data.dump());
-	std::cout << response << std::endl;
+	// TODO: verify success
 }

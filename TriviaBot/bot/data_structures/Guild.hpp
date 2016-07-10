@@ -83,8 +83,6 @@ namespace DiscordObjects {
 
 	inline void Guild::load_from_json(json data) {
 		Guild();
-		std::cout << data.dump(4) << std::endl;
-
 
 		id = data.value("id", "null");
 		name = data.value("name", "null");

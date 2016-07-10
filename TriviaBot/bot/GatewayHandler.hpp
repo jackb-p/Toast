@@ -57,7 +57,6 @@ private:
 	int heartbeat_interval;
 
 	const int protocol_version = 5;
-	const std::string TOKEN = "MTk5NjU3MDk1MjU4MTc3NTM5.ClyBNQ.15qTa-XBKRtGNMMYeXCrU50GhWE";
 
 	// bot's user obj
 	DiscordObjects::User user_object;
