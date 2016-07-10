@@ -14,9 +14,8 @@ std::string HTTPHelper::post_request(std::string url, std::string content_type, 
 	if (curl) {
 		curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 
-		// I wonder what the S in HTTPS stands for
-		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
-		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+		// Now with real HTTPS!
+		curl_easy_setopt(curl, CURLOPT_CAINFO, "bot/http/DiscordCA.crt");
 
 		std::string content_header = "Content-Type: " + content_type;
 		headers = curl_slist_append(headers, content_header.c_str());
