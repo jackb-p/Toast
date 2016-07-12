@@ -28,7 +28,7 @@ public:
 	context_ptr on_tls_init(websocketpp::connection_hdl);
 	void on_fail(websocketpp::connection_hdl hdl);
 	void on_open(websocketpp::connection_hdl hdl);
-	void on_message(websocketpp::connection_hdl &hdl, message_ptr message);
+	void on_message(websocketpp::connection_hdl hdl, message_ptr message);
 	void on_close(websocketpp::connection_hdl);
 
 private:
