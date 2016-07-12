@@ -292,6 +292,7 @@ void TriviaGame::handle_answer(std::string answer, DiscordObjects::User sender) 
 	boost::algorithm::to_lower(answer);
 	if (current_answers.find(answer) != current_answers.end()) {
 		current_thread->interrupt();
+		current_answers.clear();
 
 		boost::posix_time::time_duration diff = boost::posix_time::microsec_clock::universal_time() - question_start;
 
