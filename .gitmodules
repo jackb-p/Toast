@@ -2,3 +2,6 @@
 	path = lib/websocketpp
 	url = https://github.com/zaphoyd/websocketpp.git
 	branch = develop
+[submodule "lib/sqlite3"]
+	path = lib/sqlite3
+	url = https://github.com/azadkuh/sqlite-amalgamation.git
