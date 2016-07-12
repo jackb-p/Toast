@@ -104,7 +104,7 @@ void ClientConnection::on_fail(websocketpp::connection_hdl hdl) {
 void ClientConnection::on_open(websocketpp::connection_hdl hdl) {
 }
 
-void ClientConnection::on_message(websocketpp::connection_hdl &hdl, message_ptr message) {
+void ClientConnection::on_message(websocketpp::connection_hdl hdl, message_ptr message) {
 	if (message->get_opcode() != websocketpp::frame::opcode::text) {
 		// If the message is not text, just print as hex
 		std::cout << "<< " << websocketpp::utility::to_hex(message->get_payload()) << std::endl;
