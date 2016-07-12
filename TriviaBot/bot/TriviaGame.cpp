@@ -58,7 +58,7 @@ TriviaGame::~TriviaGame() {
 	}
 
 	std::string sql_in_list;
-	for (int i = 1; i <= scores.size(); i++) {
+	for (unsigned int i = 1; i <= scores.size(); i++) {
 		sql_in_list += "?,";
 	}
 	sql_in_list.pop_back(); // remove final comma
@@ -73,7 +73,7 @@ TriviaGame::~TriviaGame() {
 	}
 
 	// insert arguments
-	for (int i = 0; i < scores.size(); i++) {
+	for (unsigned int i = 0; i < scores.size(); i++) {
 		rc = sqlite3_bind_text(stmt, i + 1, pairs[i].first.c_str(), -1, (sqlite3_destructor_type) -1);
 
 		if (rc != SQLITE_OK) {
@@ -131,7 +131,7 @@ TriviaGame::~TriviaGame() {
 		sqlite3_finalize(stmt);
 	}
 		
-	for (int i = 0; i < data.size(); i++) {
+	for (unsigned int i = 0; i < data.size(); i++) {
 		update_sql += "UPDATE TotalScores SET TotalScore=?, AverageTime=? WHERE User=?;";
 	}
 
@@ -172,7 +172,7 @@ void TriviaGame::interrupt() {
 }
 
 void TriviaGame::question() {
-	sqlite3 *db; int rc; char *sql;
+	sqlite3 *db; int rc; std::string sql;
 
 	/// open db
 	rc = sqlite3_open("bot/db/trivia.db", &db);
@@ -183,7 +183,7 @@ void TriviaGame::question() {
 	// prepare statement
 	sqlite3_stmt *stmt;
 	sql = "SELECT * FROM Questions ORDER BY RANDOM() LIMIT 1;";
-	rc = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
+	rc = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, 0);
 
 	if (rc != SQLITE_OK) {
 		std::cerr << "SQL error." << std::endl;
@@ -198,7 +198,8 @@ void TriviaGame::question() {
 		std::string answer = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 3));
 
 		current_question = "#" + id + " [" + category + "] **" + question + "**";
-		boost::split(current_answers, boost::algorithm::to_lower_copy(answer), boost::is_any_of("*"));
+		boost::algorithm::to_lower(answer);
+		boost::split(current_answers, answer, boost::is_any_of("*"));
 		
 	} else if (rc != SQLITE_DONE) {
 		sqlite3_finalize(stmt);
@@ -240,12 +241,12 @@ void TriviaGame::give_hint(int hints_given, std::string hint) {
 		boost::split(answer_words, answer, boost::is_any_of(" "));
 
 		hint = "";
-		for (int i = 0; i < hint_words.size(); i++) {
+		for (unsigned int i = 0; i < hint_words.size(); i++) {
 			std::string word = hint_words[i];
 
 			// count number of *s
 			int length = 0;
-			for (int i = 0; i < word.length(); i++) {
+			for (unsigned int i = 0; i < word.length(); i++) {
 				if (word[i] == hide_char) {
 					length++;
 				}
