@@ -49,7 +49,7 @@ ClientConnection::ClientConnection() {
 		websocketpp::lib::placeholders::_1
 	));
 
-	gHandler = new GatewayHandler();
+	gh = std::make_unique<GatewayHandler>();
 }
 
 // Open a connection to the URI provided
@@ -111,8 +111,9 @@ void ClientConnection::on_message(websocketpp::connection_hdl hdl, message_ptr m
 		return;
 	}
 
+
 	// Pass the message to the gateway handler
-	gHandler->handle_data(message->get_payload(), c, hdl);
+	gh->handle_data(message->get_payload(), c, hdl);
 }
 
 void ClientConnection::on_close(websocketpp::connection_hdl) {

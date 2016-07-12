@@ -42,7 +42,7 @@ public:
 
 	void handle_data(std::string data, client &c, websocketpp::connection_hdl &hdl);
 
-	void heartbeat(websocketpp::lib::error_code const & ec, client *c, websocketpp::connection_hdl *hdl);
+	void heartbeat(client *c, websocketpp::connection_hdl hdl, int interval);
 
 	void on_hello(json decoded, client &c, websocketpp::connection_hdl &hdl);
 
@@ -68,6 +68,8 @@ private:
 
 	// <channel_id, game obj>
 	std::map<std::string, std::unique_ptr<TriviaGame>> games;
+
+	std::unique_ptr<boost::thread> heartbeat_thread;
 
 	APIHelper *ah;
 };

@@ -23,6 +23,8 @@ TriviaGame::TriviaGame(GatewayHandler *gh, APIHelper *ah, std::string channel_id
 }
 
 TriviaGame::~TriviaGame() {
+	current_thread.reset();
+
 	if (scores.size() == 0) {
 		ah->send_message(channel_id, ":red_circle: Game cancelled!");
 		return;
@@ -164,7 +166,7 @@ TriviaGame::~TriviaGame() {
 }
 
 void TriviaGame::start() {
-	question();
+	current_thread = std::make_unique<boost::thread>(boost::bind(&TriviaGame::question, this));
 }
 
 void TriviaGame::interrupt() {
@@ -172,127 +174,118 @@ void TriviaGame::interrupt() {
 }
 
 void TriviaGame::question() {
-	sqlite3 *db; int rc; std::string sql;
+	while (questions_asked < total_questions) {
+		sqlite3 *db; int rc; std::string sql;
 
-	/// open db
-	rc = sqlite3_open("bot/db/trivia.db", &db);
-	if (rc) {
-		std::cerr << "Cant't open database: " << sqlite3_errmsg(db) << std::endl;
-	}
+		/// open db
+		rc = sqlite3_open("bot/db/trivia.db", &db);
+		if (rc) {
+			std::cerr << "Cant't open database: " << sqlite3_errmsg(db) << std::endl;
+		}
 
-	// prepare statement
-	sqlite3_stmt *stmt;
-	sql = "SELECT * FROM Questions ORDER BY RANDOM() LIMIT 1;";
-	rc = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, 0);
+		// prepare statement
+		sqlite3_stmt *stmt;
+		sql = "SELECT * FROM Questions ORDER BY RANDOM() LIMIT 1;";
+		rc = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, 0);
 
-	if (rc != SQLITE_OK) {
-		std::cerr << "SQL error." << std::endl;
-	}
+		if (rc != SQLITE_OK) {
+			std::cerr << "SQL error." << std::endl;
+		}
 
-	rc = sqlite3_step(stmt);
-	if (rc == SQLITE_ROW) {
-		// result received
-		std::string id = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 0)); // converts id to string for us
-		std::string category = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 1));
-		std::string question = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 2));
-		std::string answer = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 3));
+		rc = sqlite3_step(stmt);
+		if (rc == SQLITE_ROW) {
+			// result received
+			std::string id = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 0)); // converts id to string for us
+			std::string category = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 1));
+			std::string question = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 2));
+			std::string answer = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 3));
 
-		current_question = "#" + id + " [" + category + "] **" + question + "**";
-		boost::algorithm::to_lower(answer);
-		boost::split(current_answers, answer, boost::is_any_of("*"));
-		
-	} else if (rc != SQLITE_DONE) {
+			current_question = "#" + id + " [" + category + "] **" + question + "**";
+			boost::algorithm::to_lower(answer);
+			boost::split(current_answers, answer, boost::is_any_of("*"));
+
+		}
+		else if (rc != SQLITE_DONE) {
+			sqlite3_finalize(stmt);
+			std::cerr << "SQLite error." << std::endl;
+		}
+
 		sqlite3_finalize(stmt);
-		std::cerr << "SQLite error." << std::endl;
+		sqlite3_close(db);
+
+		questions_asked++;
+		ah->send_message(channel_id, ":question: **(" + std::to_string(questions_asked) + "/" + std::to_string(total_questions) + ")** " + current_question);
+		question_start = boost::posix_time::microsec_clock::universal_time();
+
+		give_hint(0, "");
 	}
-
-	sqlite3_finalize(stmt);
-	sqlite3_close(db);
-
-	questions_asked++;
-	ah->send_message(channel_id, ":question: **(" + std::to_string(questions_asked) + "/" + std::to_string(total_questions) + ")** " + current_question);
-	question_start = boost::posix_time::microsec_clock::universal_time();
-
-	current_thread = std::make_unique<boost::thread>(boost::bind(&TriviaGame::give_hint, this, 0, ""));
+	gh->delete_game(channel_id);
 }
 
 void TriviaGame::give_hint(int hints_given, std::string hint) {
-	boost::this_thread::sleep(interval);
+	while (hints_given < 4) {
+		boost::this_thread::sleep(interval);
 	
-	std::string answer = *current_answers.begin();
+		std::string answer = *current_answers.begin();
 
-	bool print = false;
+		bool print = false;
 
-	if (hints_given == 0) {
-		hint = answer;
-		// probably shouldn't use regex here
-		boost::regex regexp("[a-zA-Z0-9]+?");
-		hint = boost::regex_replace(hint, regexp, std::string(1, hide_char));
+		if (hints_given == 0) {
+			hint = answer;
+			// probably shouldn't use regex here
+			boost::regex regexp("[a-zA-Z0-9]+?");
+			hint = boost::regex_replace(hint, regexp, std::string(1, hide_char));
 
-		print = true;
-	} else {
-		std::stringstream hint_stream(hint);
+			print = true;
+		} else {
+			std::stringstream hint_stream(hint);
 
-		std::random_device rd;
-		std::mt19937 rng(rd());
+			std::random_device rd;
+			std::mt19937 rng(rd());
 
-		std::vector<std::string> hint_words, answer_words;
-		boost::split(hint_words, hint, boost::is_any_of(" "));
-		boost::split(answer_words, answer, boost::is_any_of(" "));
+			std::vector<std::string> hint_words, answer_words;
+			boost::split(hint_words, hint, boost::is_any_of(" "));
+			boost::split(answer_words, answer, boost::is_any_of(" "));
 
-		hint = "";
-		for (unsigned int i = 0; i < hint_words.size(); i++) {
-			std::string word = hint_words[i];
+			hint = "";
+			for (unsigned int i = 0; i < hint_words.size(); i++) {
+				std::string word = hint_words[i];
 
-			// count number of *s
-			int length = 0;
-			for (unsigned int i = 0; i < word.length(); i++) {
-				if (word[i] == hide_char) {
-					length++;
-				}
-			}
-
-			if (length > 1) {
-				std::uniform_int_distribution<int> uni(0, word.length() - 1);
-
-				bool replaced = false;
-				while (!replaced) {
-					int replace_index = uni(rng);
-					if (word[replace_index] == hide_char) {
-						word[replace_index] = answer_words[i][replace_index];
-
-						print = true;
-						replaced = true;
+				// count number of *s
+				int length = 0;
+				for (unsigned int i = 0; i < word.length(); i++) {
+					if (word[i] == hide_char) {
+						length++;
 					}
 				}
-			}
 
-			hint += word + " ";
+				if (length > 1) {
+					std::uniform_int_distribution<int> uni(0, word.length() - 1);
+
+					bool replaced = false;
+					while (!replaced) {
+						int replace_index = uni(rng);
+						if (word[replace_index] == hide_char) {
+							word[replace_index] = answer_words[i][replace_index];
+
+							print = true;
+							replaced = true;
+						}
+					}
+				}
+
+				hint += word + " ";
+			}
+		}
+
+		hints_given++; // now equal to the amount of [hide_char]s that need to be present in each word
+	
+		if (print) {
+			ah->send_message(channel_id, ":small_orange_diamond: Hint: **`" + hint + "`**");
 		}
 	}
-
-	hints_given++; // now equal to the amount of [hide_char]s that need to be present in each word
-	
-	if (print) {
-		ah->send_message(channel_id, ":small_orange_diamond: Hint: **`" + hint + "`**");
-	}
-
-	if (hints_given < 4) {
-		current_thread = std::make_unique<boost::thread>(boost::bind(&TriviaGame::give_hint, this, hints_given, hint));
-	} else {
-		current_thread = std::make_unique<boost::thread>(boost::bind(&TriviaGame::question_failed, this));
-	}
-}
-
-void TriviaGame::question_failed() {
 	boost::this_thread::sleep(interval);
 	ah->send_message(channel_id, ":exclamation: Question failed. Answer: ** `" + *current_answers.begin() + "` **");
-
-	if (questions_asked < total_questions) {
-		question();
-	} else {
-		gh->delete_game(channel_id);
-	}
 }
 
 void TriviaGame::handle_answer(std::string answer, DiscordObjects::User sender) {
@@ -312,7 +305,8 @@ void TriviaGame::handle_answer(std::string answer, DiscordObjects::User sender) 
 		update_average_time(sender.id, diff.total_milliseconds());
 
 		if (questions_asked < total_questions) {
-			question();
+			interrupt(); current_thread.reset(); // don't know if required
+			current_thread = std::make_unique<boost::thread>(boost::bind(&TriviaGame::question, this));
 		} else {
 			gh->delete_game(channel_id);
 		}

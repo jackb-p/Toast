@@ -31,23 +31,19 @@ void GatewayHandler::handle_data(std::string data, client &c, websocketpp::conne
 	}
 }
 
-void GatewayHandler::heartbeat(websocketpp::lib::error_code const & ec, client *c, websocketpp::connection_hdl *hdl) {
-	json heartbeat = {
-		{ "op", 1 },
-		{ "d", last_seq }
-	};
+void GatewayHandler::heartbeat(client *c, websocketpp::connection_hdl hdl, int interval) {
+	while (true) {
+		boost::this_thread::sleep(boost::posix_time::milliseconds(interval));
 
-	c->send(*hdl, heartbeat.dump(), websocketpp::frame::opcode::text);
+		json heartbeat = {
+			{ "op", 1 },
+			{ "d", last_seq }
+		};
 
-	c->set_timer(heartbeat_interval, websocketpp::lib::bind(
-		&GatewayHandler::heartbeat,
-		this,
-		websocketpp::lib::placeholders::_1,
-		c,
-		hdl
-	));
+		c->send(hdl, heartbeat.dump(), websocketpp::frame::opcode::text);
 
-	c->get_alog().write(websocketpp::log::alevel::app, "Sent heartbeat. (seq: " + std::to_string(last_seq) + ")");
+		c->get_alog().write(websocketpp::log::alevel::app, "Sent heartbeat. (seq: " + std::to_string(last_seq) + ")");
+	}
 }
 
 void GatewayHandler::on_hello(json decoded, client &c, websocketpp::connection_hdl &hdl) {
@@ -55,13 +51,7 @@ void GatewayHandler::on_hello(json decoded, client &c, websocketpp::connection_h
 
 	c.get_alog().write(websocketpp::log::alevel::app, "Heartbeat interval: " + std::to_string(heartbeat_interval / 1000.0f) + " seconds");
 
-	c.set_timer(heartbeat_interval, websocketpp::lib::bind(
-		&GatewayHandler::heartbeat,
-		this,
-		websocketpp::lib::placeholders::_1,
-		&c,
-		&hdl
-	));
+	heartbeat_thread = std::make_unique<boost::thread>(boost::bind(&GatewayHandler::heartbeat, this, &c, hdl, heartbeat_interval));
 
 	identify(c, hdl);
 }
@@ -78,13 +68,22 @@ void GatewayHandler::on_dispatch(json decoded, client &c, websocketpp::connectio
 	}
 	else if (event_name == "GUILD_CREATE") {
 		std::string guild_id = data["id"];
-		guilds[guild_id] = std::make_unique<DiscordObjects::Guild>(data);
+		try {
+			guilds[guild_id] = std::make_unique<DiscordObjects::Guild>(data);
+		}
+		catch (std::domain_error err) {
+			// this doesn't even work
+			c.get_alog().write(websocketpp::log::elevel::rerror, "Domain error");
+		}
+		
+
+		c.get_alog().write(websocketpp::log::alevel::app, "Loaded guild: " + guilds[guild_id]->name);
 		
 		for (json channel : data["channels"]) {
 			std::string channel_id = channel["id"];
 			channel["guild_id"] = guild_id;
 			// create channel obj, add to overall channel list
-			channels[channel_id] = std::make_unique<DiscordObjects::Channel>(channel);
+			channels[channel_id] = std::make_shared<DiscordObjects::Channel>(channel);
 			// add ptr to said channel list to guild's channel list
 			guilds[guild_id]->channels.push_back(std::shared_ptr<DiscordObjects::Channel>(channels[channel_id]));
 		}

@@ -33,7 +33,6 @@ private:
 
 	void question();
 	void give_hint(int hints_given, std::string hint);
-	void question_failed();
 	void increase_score(std::string user_id);
 	void update_average_time(std::string user_id, int time);
 
