@@ -108,14 +108,14 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CURL_STATICLIB;WIN32_WINNT=0x0600;URDL_NO_LIB=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\boost_1_61_0;C:\OpenSSL-Win64\include;C:\Users\Jack\Documents\GitHubVisualStudio\TriviaDiscord\lib\cpr\include;C:\Users\Jack\Documents\GitHubVisualStudio\TriviaDiscord\lib\websocketpp;C:\Users\Jack\Documents\GitHubVisualStudio\TriviaDiscord\lib\sqlite3;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\Jack\Documents\GitHubVisualStudio\TriviaDiscord\lib\libcurl\include;C:\Users\Jack\Documents\GitHubVisualStudio\TriviaDiscord\lib\boost_1_61_0;C:\Users\Jack\Documents\GitHubVisualStudio\TriviaDiscord\lib\openssl\include;C:\Users\Jack\Documents\GitHubVisualStudio\TriviaDiscord\lib\websocketpp;C:\Users\Jack\Documents\GitHubVisualStudio\TriviaDiscord\lib\sqlite3;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-D_SCL_SECURE_NO_WARNINGS -DUSE_SYSTEM_CURL=OFF -D_WIN32_WINNT=0x0A00 %(AdditionalOptions)</AdditionalOptions>
       <ObjectFileName>$(IntDir)/%(RelativeDir)/</ObjectFileName>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>libcurl.lib;sqlite3.lib;libeay32.lib;ssleay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libcurl.lib;libeay32.lib;ssleay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/SUBSYSTEM:CONSOLE %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalLibraryDirectories>C:\buildcurl\third-party\libcurl\lib\dll-release-x64;C:\OpenSSL-Win64\lib;C:\boost_1_61_0\lib64-msvc-14.0;C:\Users\Jack\Documents\GitHubVisualStudio\TriviaDiscord\lib\sqlite3\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Users\Jack\Documents\GitHubVisualStudio\TriviaDiscord\lib\libcurl\lib\dll-release-x64;C:\Users\Jack\Documents\GitHubVisualStudio\TriviaDiscord\lib\openssl\lib;C:\Users\Jack\Documents\GitHubVisualStudio\TriviaDiscord\lib\boost_1_61_0\lib64-msvc-14.0;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -157,19 +157,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\lib\cpr\cpr\auth.cpp" />
-    <ClCompile Include="..\lib\cpr\cpr\cookies.cpp" />
-    <ClCompile Include="..\lib\cpr\cpr\cprtypes.cpp" />
-    <ClCompile Include="..\lib\cpr\cpr\digest.cpp" />
-    <ClCompile Include="..\lib\cpr\cpr\error.cpp" />
-    <ClCompile Include="..\lib\cpr\cpr\multipart.cpp" />
-    <ClCompile Include="..\lib\cpr\cpr\parameters.cpp" />
-    <ClCompile Include="..\lib\cpr\cpr\payload.cpp" />
-    <ClCompile Include="..\lib\cpr\cpr\proxies.cpp" />
-    <ClCompile Include="..\lib\cpr\cpr\session.cpp" />
-    <ClCompile Include="..\lib\cpr\cpr\util.cpp" />
+    <ClCompile Include="..\..\..\GitHubVisualStudio\TriviaDiscord\lib\sqlite3\sqlite3.c" />
     <ClCompile Include="bot\APIHelper.cpp" />
     <ClCompile Include="bot\ClientConnection.cpp" />
+    <ClInclude Include="..\..\..\GitHubVisualStudio\TriviaDiscord\lib\sqlite3\sqlite3.h" />
     <ClInclude Include="bot\ClientConnection.hpp" />
     <ClCompile Include="bot\GatewayHandler.cpp" />
     <ClCompile Include="bot\http\HTTPHelper.cpp" />

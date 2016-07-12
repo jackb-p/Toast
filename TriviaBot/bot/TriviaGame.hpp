@@ -51,7 +51,7 @@ private:
 	// <user_id, average_time>
 	std::map<std::string, int> average_times;
 
-	boost::shared_ptr<boost::thread> current_thread;
+	std::unique_ptr<boost::thread> current_thread;
 
 	boost::posix_time::ptime question_start;
 };

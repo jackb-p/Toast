@@ -212,7 +212,7 @@ void TriviaGame::question() {
 	ah->send_message(channel_id, ":question: **(" + std::to_string(questions_asked) + "/" + std::to_string(total_questions) + ")** " + current_question);
 	question_start = boost::posix_time::microsec_clock::universal_time();
 
-	current_thread = boost::shared_ptr<boost::thread>(new boost::thread(boost::bind(&TriviaGame::give_hint, this, 0, "")));
+	current_thread = std::make_unique<boost::thread>(boost::bind(&TriviaGame::give_hint, this, 0, ""));
 }
 
 void TriviaGame::give_hint(int hints_given, std::string hint) {
@@ -277,9 +277,9 @@ void TriviaGame::give_hint(int hints_given, std::string hint) {
 	}
 
 	if (hints_given < 4) {
-		current_thread = boost::shared_ptr<boost::thread>(new boost::thread(boost::bind(&TriviaGame::give_hint, this, hints_given, hint)));
+		current_thread = std::make_unique<boost::thread>(boost::bind(&TriviaGame::give_hint, this, hints_given, hint));
 	} else {
-		current_thread = boost::shared_ptr<boost::thread>(new boost::thread(boost::bind(&TriviaGame::question_failed, this)));
+		current_thread = std::make_unique<boost::thread>(boost::bind(&TriviaGame::question_failed, this));
 	}
 }
 
