@@ -18,8 +18,6 @@ public:
 private:
 	const std::string BASE_URL;
 	const std::string CHANNELS_URL;
-	const std::string TOKEN;
-	const std::string TOKEN_PARAM;
 	const std::string JSON_CTYPE;
 
 	HTTPHelper *http;

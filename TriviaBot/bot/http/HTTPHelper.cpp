@@ -1,5 +1,7 @@
 #include "HTTPHelper.hpp"
 
+extern std::string bot_token;
+
 /*
 *  Warning: (Awful) C Code
 */
@@ -17,8 +19,15 @@ std::string HTTPHelper::post_request(std::string url, std::string content_type, 
 		// Now with real HTTPS!
 		curl_easy_setopt(curl, CURLOPT_CAINFO, "bot/http/DiscordCA.crt");
 
-		std::string content_header = "Content-Type: " + content_type;
-		headers = curl_slist_append(headers, content_header.c_str());
+		std::string header_arr[3];
+		header_arr[0] = "Content-Type: " + content_type;
+		header_arr[1] = "Authorization: Bot " + bot_token;
+		header_arr[2] = "User-Agent: DiscordBot(http://github.com/jackb-p/triviadiscord, 1.0)";
+
+		for (std::string h : header_arr) {
+			headers = curl_slist_append(headers, h.c_str());
+		}
+
 		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 
 		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
