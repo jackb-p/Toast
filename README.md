@@ -1,5 +1,5 @@
-trivia-bot
-==========
+#trivia-bot <img src="https://cdn.discordapp.com/attachments/164732409919569920/205700949304541184/emoji.png" width="30" height="30" />
+
 A bot which provides a Trivia game for [Discord](https://discordapp.com/).
 
 
