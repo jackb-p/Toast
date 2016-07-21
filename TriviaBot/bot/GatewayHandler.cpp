@@ -177,7 +177,7 @@ void GatewayHandler::identify(client &c, websocketpp::connection_hdl &hdl) {
 	};
 
 	c.send(hdl, identify.dump(), websocketpp::frame::opcode::text);
-	c.get_alog().write(websocketpp::log::alevel::app, "Sent identify payload. Token: " + bot_token);
+	c.get_alog().write(websocketpp::log::alevel::app, "Sent identify payload.");
 }
 
 void GatewayHandler::delete_game(std::string channel_id) {
