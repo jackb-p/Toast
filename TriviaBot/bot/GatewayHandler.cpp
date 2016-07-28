@@ -153,6 +153,9 @@ void GatewayHandler::on_dispatch(json decoded, client &c, websocketpp::connectio
 			}
 			ah->send_message(channel->id, m);
 		}
+		else if (words[0] == "`info") {
+			ah->send_message(channel->id, ":information_source: trivia-bot by Jack. <http://github.com/jackb-p/TriviaDiscord>");
+		}
 		else if (games.find(channel->id) != games.end()) { // message received in channel with ongoing game
 			games[channel->id]->handle_answer(message, sender);
 		}
