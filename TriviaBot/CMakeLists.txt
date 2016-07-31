@@ -14,8 +14,8 @@ file(GLOB_RECURSE sources bot/*.cpp bot/*.hpp)
 # add the data to the target, so it becomes visible in some IDE
 add_executable(TriviaBot ${sources})
 
-# just for example add some compiler flags
-target_compile_options(TriviaBot PUBLIC -std=c++14 -Wall -Wfloat-conversion -g)
+# add some compiler flags
+set (CMAKE_CXX_FLAGS "-std=c++14 -Wall -Wfloat-conversion ${CMAKE_CXX_FLAGS}")
 
 ###############################################################################
 ## dependencies ###############################################################
