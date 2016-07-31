@@ -15,7 +15,7 @@ file(GLOB_RECURSE sources bot/*.cpp bot/*.hpp)
 add_executable(TriviaBot ${sources})
 
 # add some compiler flags
-set (CMAKE_CXX_FLAGS "-std=c++14 -Wall -Wfloat-conversion ${CMAKE_CXX_FLAGS}")
+set (CMAKE_CXX_FLAGS "-std=c++11 -Wall ${CMAKE_CXX_FLAGS}")
 
 ###############################################################################
 ## dependencies ###############################################################
