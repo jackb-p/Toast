@@ -37,6 +37,7 @@ include_directories(
   ${Boost_INCLUDE_DIR}
   ${CURL_INCLUDE_DIR}
   ../lib/websocketpp
+  ../lib/sqlite3
 )
 
 # don't know if necessary, too scared to remove
