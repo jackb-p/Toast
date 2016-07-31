@@ -30,7 +30,7 @@ target_link_libraries(TriviaBot PUBLIC
   ${OPENSSL_LIBRARIES}
   ${CURL_LIBRARIES}
   pthread
-  ld
+  dl
 )
 
 include_directories(
