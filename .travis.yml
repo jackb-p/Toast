@@ -1,20 +1,15 @@
-language: cpp
+sudo: required
+dist: trusty
 
-compiler: gcc
+language: cpp
+compiler: clang
 
 addons:
   apt:
-    sources:
-      - llvm-toolchain-precise
-      - ubuntu-toolchain-r-test
     packages:
-      - g++-5
-      - gcc-5
       - libboost-all-dev
       - libcurl4-openssl-dev
       - cmake
-
-install: export CXX="g++-5" CC="gcc-5";
 
 script:
   - cd TriviaBot
