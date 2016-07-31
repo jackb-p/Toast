@@ -2,9 +2,9 @@ language: cpp
 
 compiler: gcc
 
-before_install: sudo apt-get install cmake libboost-all-dev libcurl-dev
+before_install: sudo apt-get install cmake libboost-all-dev libcurl4-openssl-dev
  
 script:
-  - ls
+  - cd TriviaBot
   - cmake .
   - make
