@@ -6,9 +6,6 @@
 /TriviaBot/x64/
 /x64/
 
-# Library files
-sqlite3/
-
 # Data files
 /TriviaBot/data_management/questions
 /TriviaBot/bot/db/trivia.db
