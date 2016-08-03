@@ -19,7 +19,7 @@ namespace DiscordObjects {
 
 class TriviaGame {
 public:
-	TriviaGame(GatewayHandler *gh, APIHelper *ah, std::string channel_id, int total_questions, int delay);
+	TriviaGame(GatewayHandler *gh, std::shared_ptr<APIHelper> ah, std::string channel_id, int total_questions, int delay);
 	~TriviaGame();
 
 	void start();
@@ -38,7 +38,7 @@ private:
 
 	std::string channel_id;
 	GatewayHandler *gh;
-	APIHelper *ah;
+	std::shared_ptr<APIHelper> ah;
 
 	const char hide_char = '#';
 

@@ -1,4 +1,6 @@
 #include <curl/curl.h>
+#include <include/libplatform/libplatform.h>
+#include <include/v8.h>
 
 #include "ClientConnection.hpp"
 
@@ -6,6 +8,12 @@ std::string bot_token;
 
 int main(int argc, char *argv[]) {
 	curl_global_init(CURL_GLOBAL_DEFAULT);
+
+	v8::V8::InitializeICUDefaultLocation(argv[0]);
+	v8::V8::InitializeExternalStartupData(argv[0]);
+	v8::Platform* platform = v8::platform::CreateDefaultPlatform();
+	v8::V8::InitializePlatform(platform);
+	v8::V8::Initialize();
 
 	if (argc == 2) {
 		bot_token = argv[1];
@@ -33,6 +41,10 @@ int main(int argc, char *argv[]) {
 	}
 
 	std::getchar();
+
+	v8::V8::Dispose();
+	v8::V8::ShutdownPlatform();
+	delete platform;
 
 	curl_global_cleanup();
 

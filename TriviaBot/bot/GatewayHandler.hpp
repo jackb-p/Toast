@@ -9,6 +9,7 @@
 #include "json/json.hpp"
 
 #include "TriviaGame.hpp"
+#include "js/V8Instance.hpp"
 #include "data_structures/User.hpp"
 #include "data_structures/Guild.hpp"
 #include "data_structures/Channel.hpp"
@@ -68,10 +69,12 @@ private:
 
 	// <channel_id, game obj>
 	std::map<std::string, std::unique_ptr<TriviaGame>> games;
+	// <guild_id, v8 instance>
+	std::map<std::string, std::unique_ptr<V8Instance>> v8_instances;
 
 	std::unique_ptr<boost::thread> heartbeat_thread;
 
-	APIHelper *ah;
+	std::shared_ptr<APIHelper> ah;
 };
 
 #endif

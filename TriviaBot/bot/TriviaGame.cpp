@@ -13,7 +13,7 @@
 #include "APIHelper.hpp"
 #include "data_structures/User.hpp"
 
-TriviaGame::TriviaGame(GatewayHandler *gh, APIHelper *ah, std::string channel_id, int total_questions, int delay) : interval(delay) {
+TriviaGame::TriviaGame(GatewayHandler *gh, std::shared_ptr<APIHelper> ah, std::string channel_id, int total_questions, int delay) : interval(delay) {
 	this->gh = gh;
 	this->ah = ah;
 	this->channel_id = channel_id;

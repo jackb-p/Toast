@@ -10,7 +10,7 @@ extern std::string bot_token;
 GatewayHandler::GatewayHandler() {
 	last_seq = 0;
 
-	ah = new APIHelper();
+	ah = std::make_shared<APIHelper>();
 }
 
 void GatewayHandler::handle_data(std::string data, client &c, websocketpp::connection_hdl &hdl) {
@@ -68,14 +68,7 @@ void GatewayHandler::on_dispatch(json decoded, client &c, websocketpp::connectio
 	}
 	else if (event_name == "GUILD_CREATE") {
 		std::string guild_id = data["id"];
-		try {
-			guilds[guild_id] = std::make_unique<DiscordObjects::Guild>(data);
-		}
-		catch (std::domain_error err) {
-			// this doesn't even work
-			c.get_alog().write(websocketpp::log::elevel::rerror, "Domain error");
-		}
-		
+		guilds[guild_id] = std::make_unique<DiscordObjects::Guild>(data);
 
 		c.get_alog().write(websocketpp::log::alevel::app, "Loaded guild: " + guilds[guild_id]->name);
 		
@@ -86,6 +79,11 @@ void GatewayHandler::on_dispatch(json decoded, client &c, websocketpp::connectio
 			channels[channel_id] = std::make_shared<DiscordObjects::Channel>(channel);
 			// add ptr to said channel list to guild's channel list
 			guilds[guild_id]->channels.push_back(std::shared_ptr<DiscordObjects::Channel>(channels[channel_id]));
+		}
+
+		if (v8_instances.count(guild_id) == 0) {
+			v8_instances[guild_id] = std::make_unique<V8Instance>(ah);
+			c.get_alog().write(websocketpp::log::alevel::app, "Created v8 instance for guild " + guild_id);
 		}
 	}
 	else if (event_name == "TYPING_START") {}
@@ -155,6 +153,13 @@ void GatewayHandler::on_dispatch(json decoded, client &c, websocketpp::connectio
 		}
 		else if (words[0] == "`info") {
 			ah->send_message(channel->id, ":information_source: trivia-bot by Jack. <http://github.com/jackb-p/TriviaDiscord>");
+		}
+		else if (words[0] == "`js") {
+			std::string js = message.erase(0, 3);
+			auto it = v8_instances.find(channel->guild_id);
+			if (it != v8_instances.end()) {
+				it->second->exec_js(js, channel->id);
+			}
 		}
 		else if (games.find(channel->id) != games.end()) { // message received in channel with ongoing game
 			games[channel->id]->handle_answer(message, sender);
