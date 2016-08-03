@@ -9,3 +9,6 @@
 # Data files
 /TriviaBot/data_management/questions
 /TriviaBot/bot/db/trivia.db
+
+# Compiled sqlite file
+sqlite3.obj
