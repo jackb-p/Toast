@@ -22,22 +22,23 @@ LoadDB.cpp takes some time to execute.
 ### Commands
 `` `trivia`` is the base command.
 
-| Argument                | Description                                                                                                                                                                |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `questions` `interval`  | Where `questions` and `interval` are integers. Makes the game last `questions` number of questions, optionally sets the time interval between hints to `interval` seconds. | 
-| stop                    | Stops the trivia game currently in the channel the message is sent from, if there is one.                                                                                  |
-| help                    | Prints a help list, similar to this table.                                                                                                                                 |
+| Argument | Description |
+| --- | --- |
+| `questions` `interval` | Where `questions` and `interval` are integers. Makes the game last `questions` number of questions, optionally sets the time interval between hints to `interval` seconds. | 
+| stop | Stops the trivia game currently in the channel the message is sent from, if there is one. |
+| help | Prints a help list, similar to this table. |
 
 
 ### Compiling
 #### Dependencies
-| Name          | Website                                                       | Notes                                                                                            |
-| ------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| boost         | [boost.org](http://www.boost.org/)                            |                                                                                                  |
-| websocketpp   | [zaphoyd/websocketpp](https://github.com/zaphoyd/websocketpp) | Included as submodule.                                                                           |
-| cURL          | [curl.haxx.se](https://curl.haxx.se/)                         |                                                                                                  |
-| sqlite3       | [sqlite.org](https://www.sqlite.org/)                         | Included as submodule. Uses a [different repo](https://github.com/azadkuh/sqlite-amalgamation/). |
-| nlohmann/json | [nlohmann/json](https://github.com/nlohmann/json)             | (Slightly modified) source file included in repo.                                                |
+| Name | Website | Notes |
+| --- | --- | --- |
+| boost | [boost.org](http://www.boost.org/) | |
+| websocketpp | [zaphoyd/websocketpp](https://github.com/zaphoyd/websocketpp) | Included as submodule. |
+| cURL | [curl.haxx.se](https://curl.haxx.se/) | |
+| sqlite3 | [sqlite.org](https://www.sqlite.org/) | Included as submodule. Uses a [different repo](https://github.com/azadkuh/sqlite-amalgamation/). |
+| nlohmann/json | [nlohmann/json](https://github.com/nlohmann/json) | (Slightly modified) source file included in repo. |
+| V8 | [Google V8](https://developers.google.com/v8/) | Debian/Ubuntu `libv8` packages are too outdated. |
 
 #### Linux (debian)
 1. Clone the github repo: `git clone https://github.com/jackb-p/TriviaDiscord.git TriviaDiscord`
