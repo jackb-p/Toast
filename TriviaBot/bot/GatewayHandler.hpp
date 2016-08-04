@@ -9,6 +9,7 @@
 #include "json/json.hpp"
 
 #include "TriviaGame.hpp"
+#include "js/CommandHelper.hpp"
 #include "js/V8Instance.hpp"
 #include "data_structures/User.hpp"
 #include "data_structures/Guild.hpp"
@@ -61,6 +62,8 @@ private:
 
 	// bot's user obj
 	DiscordObjects::User user_object;
+
+	std::unique_ptr<CommandHelper> command_helper;
 
 	// <id, ptr to data>
 	std::map<std::string, std::unique_ptr<DiscordObjects::Guild>> guilds;

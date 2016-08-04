@@ -1,14 +1,20 @@
 BEGIN TRANSACTION;
 CREATE TABLE "TotalScores" (
-	`User`	TEXT UNIQUE,
-	`TotalScore`	INTEGER,
-	`AverageTime`	INTEGER,
+	`User`              TEXT NOT NULL,
+	`TotalScore`        INTEGER NOT NULL,
+	`AverageTime`       INTEGER NOT NULL,
 	PRIMARY KEY(User)
 );
 CREATE TABLE "Questions" (
-	`ID`	INTEGER PRIMARY KEY AUTOINCREMENT,
-	`Category`	TEXT,
-	`Question`	TEXT,
-	`Answer`	TEXT
+	`ID`                INTEGER PRIMARY KEY AUTOINCREMENT,
+	`Category`          TEXT NOT NULL,
+	`Question`          TEXT NOT NULL,
+	`Answer`            TEXT NOT NULL
+);
+CREATE TABLE `CustomJS` (
+	`ID`                INTEGER PRIMARY KEY AUTOINCREMENT,
+	`GuildID`           TEXT NOT NULL,
+	`CommandName`       TEXT NOT NULL,
+	`Script`            TEXT NOT NULL
 );
 COMMIT;

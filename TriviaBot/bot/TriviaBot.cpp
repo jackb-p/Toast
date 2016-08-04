@@ -40,8 +40,6 @@ int main(int argc, char *argv[]) {
 		std::cerr << "other exception" << std::endl;
 	}
 
-	std::getchar();
-
 	v8::V8::Dispose();
 	v8::V8::ShutdownPlatform();
 	delete platform;

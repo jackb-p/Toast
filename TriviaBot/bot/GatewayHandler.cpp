@@ -11,6 +11,7 @@ GatewayHandler::GatewayHandler() {
 	last_seq = 0;
 
 	ah = std::make_shared<APIHelper>();
+	command_helper = std::make_unique<CommandHelper>();
 }
 
 void GatewayHandler::handle_data(std::string data, client &c, websocketpp::connection_hdl &hdl) {
@@ -95,6 +96,7 @@ void GatewayHandler::on_dispatch(json decoded, client &c, websocketpp::connectio
 
 		std::vector<std::string> words;
 		boost::split(words, message, boost::is_any_of(" "));
+		Command custom_command;
 		if (words[0] == "`trivia" || words[0] == "`t") {
 			int questions = 10;
 			int delay = 8;
@@ -136,14 +138,6 @@ void GatewayHandler::on_dispatch(json decoded, client &c, websocketpp::connectio
 			games[channel->id] = std::make_unique<TriviaGame>(this, ah, channel->id, questions, delay);
 			games[channel->id]->start();
 		} 
-		else if (words[0] == "`channels") {
-			std::string m = "Channel List:\n";
-			for (auto ch : channels) {
-				m += "> " + ch.second->name + " (" + ch.second->id + ") [" + ch.second->type + "] Guild: " 
-					+ guilds[ch.second->guild_id]->name + " (" + ch.second->guild_id + ")\n";
-			}
-			ah->send_message(channel->id, m);
-		}
 		else if (words[0] == "`guilds") {
 			std::string m = "Guild List:\n";
 			for (auto &gu : guilds) {
@@ -154,11 +148,38 @@ void GatewayHandler::on_dispatch(json decoded, client &c, websocketpp::connectio
 		else if (words[0] == "`info") {
 			ah->send_message(channel->id, ":information_source: trivia-bot by Jack. <http://github.com/jackb-p/TriviaDiscord>");
 		}
-		else if (words[0] == "`js") {
-			std::string js = message.erase(0, 3);
+		else if (words[0] == "`js" && message.length() > 4) {
+			std::string js = message.substr(4);
 			auto it = v8_instances.find(channel->guild_id);
-			if (it != v8_instances.end()) {
+			if (it != v8_instances.end() && js.length() > 0) {
 				it->second->exec_js(js, channel->id);
+			}
+		}
+		else if (words[0] == "`createjs" && message.length() > 8) {
+			std::string args = message.substr(10);
+			size_t seperator_loc = args.find("|");
+			if (seperator_loc != std::string::npos) {
+				std::string command_name = args.substr(0, seperator_loc);
+				std::string script = args.substr(seperator_loc + 1);
+				int result = command_helper->insert_command(channel->guild_id, command_name, script); 
+				switch (result) {
+				case 0:
+					ah->send_message(channel->id, ":warning: Error!"); break;
+				case 1:
+					ah->send_message(channel->id, ":new: Command `" + command_name + "` successfully created."); break;
+				case 2:
+					ah->send_message(channel->id, ":arrow_heading_up: Command `" + command_name + "` successfully updated."); break;
+				}
+			}
+		}
+		else if (words[0] == "`shutdown" && sender.id == "82232146579689472") { // it me
+			ah->send_message(channel->id, ":zzz: Goodbye!");
+			c.close(hdl, websocketpp::close::status::going_away, "`shutdown command used.");
+		}
+		else if (command_helper->get_command(channel->guild_id, words[0], custom_command)) {
+			auto it = v8_instances.find(channel->guild_id);
+			if (it != v8_instances.end() && custom_command.script.length() > 0) {
+				it->second->exec_js(custom_command.script, channel->id);
 			}
 		}
 		else if (games.find(channel->id) != games.end()) { // message received in channel with ongoing game
