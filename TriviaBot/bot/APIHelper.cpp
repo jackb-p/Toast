@@ -15,6 +15,10 @@ APIHelper::APIHelper() : BASE_URL("https://discordapp.com/api"), CHANNELS_URL(BA
 }
 
 void APIHelper::send_message(std::string channel_id, std::string message) {
+	if (message == "") {
+		Logger::write("[send_message] Tried to send empty message", Logger::LogLevel::Warning);
+	}
+
 	const std::string url = CHANNELS_URL + "/" + channel_id + "/messages";
 	json data = {
 		{ "content", message }

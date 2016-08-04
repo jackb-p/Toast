@@ -34,7 +34,7 @@ CommandHelper::CommandHelper() {
 		}
 	}
 
-	Logger::write(std::to_string(commands.size()) + " custom command loaded", Logger::LogLevel::Info);
+	Logger::write(std::to_string(commands.size()) + " custom command(s) loaded", Logger::LogLevel::Info);
 
 	sqlite3_finalize(stmt);
 	sqlite3_close(db);

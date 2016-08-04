@@ -67,22 +67,37 @@ void V8Instance::exec_js(std::string js, std::string channel_id) {
 	// compile
 	Logger::write("[v8] Isolate nullptr? " + std::to_string(isolate == nullptr) + " Context empty? " + std::to_string(context.IsEmpty()), Logger::LogLevel::Debug);
 
-	TryCatch try_catch(isolate);
+	TryCatch compile_try_catch(isolate);
 	Local<Script> script;
 
 	if (!Script::Compile(context, source).ToLocal(&script)) {
-		String::Utf8Value error(try_catch.Exception());
-		Logger::write("[v8] Compilation error: " + std::string((const char *) *error), Logger::LogLevel::Debug);
+		String::Utf8Value error(compile_try_catch.Exception());
+
+		std::string err_msg = *error;
+		Logger::write("[v8] Compilation error: " + err_msg, Logger::LogLevel::Debug);
+		ah->send_message(channel_id, ":warning: **Compilation error:** `" + err_msg + "`");
 
 		return;
 	}
 
-	// run
-	script->Run(context);
+	TryCatch run_try_catch(isolate);
+	MaybeLocal<Value> v = script->Run(context);
+	if (v.IsEmpty()) {
+		String::Utf8Value error(run_try_catch.Exception());
+
+		std::string err_msg = *error;
+		Logger::write("[v8] Runtime error: " + err_msg, Logger::LogLevel::Debug);
+		ah->send_message(channel_id, ":warning: **Runtime error:** `" + err_msg + "`");
+
+		return;
+	}
+
 	Logger::write("[v8] Script compiled and run", Logger::LogLevel::Debug);
 
-	ah->send_message(channel_id, print_text);
-	print_text = "";
+	if (print_text != "") {
+		ah->send_message(channel_id, print_text);
+		print_text = "";
+	}
 }
 
 void V8Instance::js_print(const v8::FunctionCallbackInfo<v8::Value> &args) {
