@@ -3,6 +3,7 @@
 
 #include "V8Instance.hpp"
 #include "../APIHelper.hpp"
+#include "../Logger.hpp"
 
 using namespace v8;
 
@@ -21,7 +22,7 @@ void V8Instance::create() {
 
 	isolate = Isolate::New(create_params);
 	isolate->Enter();
-	std::cout << "Created isolate." << std::endl;
+	Logger::write("[v8] Created isolate", Logger::LogLevel::Debug);
 
 	Isolate::Scope isolate_scope(isolate);
 	HandleScope handle_scope(isolate);
@@ -30,7 +31,7 @@ void V8Instance::create() {
 	Local<Context> context = create_context();
 	context->Enter();
 	Context::Scope context_scope(context);
-	std::cout << "Created context and context scope." << std::endl;
+	Logger::write("[v8] Created context and context scope", Logger::LogLevel::Debug);
 }
 
 v8::Local<v8::Context> V8Instance::create_context() {
@@ -38,13 +39,13 @@ v8::Local<v8::Context> V8Instance::create_context() {
 	// bind print() function
 	Local<External> self = External::New(isolate, (void *) this);
 	global->Set(String::NewFromUtf8(isolate, "print", NewStringType::kNormal).ToLocalChecked(), FunctionTemplate::New(isolate, V8Instance::js_print, self));
-	std::cout << "Created global, assigned print function." << std::endl;
+	Logger::write("[v8] Created global obj, linked print function", Logger::LogLevel::Debug);
 
 	return Context::New(isolate, NULL, global);
 }
 
 void V8Instance::clean_up() {
-	std::cout << "Cleaning up." << std::endl;
+	Logger::write("[v8] Cleaning up", Logger::LogLevel::Debug);
 	isolate->Exit();
 	isolate->Dispose();
 	delete array_buffer_allocator;
@@ -56,33 +57,29 @@ void V8Instance::reload() {
 }
 
 void V8Instance::exec_js(std::string js, std::string channel_id) {
-	std::cout << "Isolate nullptr? " << (isolate == nullptr) << std::endl;
-
 	HandleScope handle_scope(isolate);
 	Local<Context> context(isolate->GetCurrentContext());
 
-	std::cout << "Executing js: " << js << std::endl;
+	Logger::write("[v8] Executing JS: " + js, Logger::LogLevel::Debug);
 
 	Local<String> source = String::NewFromUtf8(isolate, js.c_str(), NewStringType::kNormal).ToLocalChecked();
-	std::cout << "String coverted" << std::endl;
 
 	// compile
-	std::cout << "Context empty? " << context.IsEmpty() << std::endl;
+	Logger::write("[v8] Isolate nullptr? " + std::to_string(isolate == nullptr) + " Context empty? " + std::to_string(context.IsEmpty()), Logger::LogLevel::Debug);
 
 	TryCatch try_catch(isolate);
 	Local<Script> script;
 
 	if (!Script::Compile(context, source).ToLocal(&script)) {
 		String::Utf8Value error(try_catch.Exception());
-		std::cerr << "Error: " << *error << std::endl;
+		Logger::write("[v8] Compilation error: " + std::string((const char *) *error), Logger::LogLevel::Debug);
 
 		return;
 	}
-	std::cout << "Compiled" << std::endl;
 
 	// run
 	script->Run(context);
-	std::cout << "Ran" << std::endl;
+	Logger::write("[v8] Script compiled and run", Logger::LogLevel::Debug);
 
 	ah->send_message(channel_id, print_text);
 	print_text = "";

@@ -4,6 +4,7 @@
 
 #include "APIHelper.hpp"
 #include "data_structures/User.hpp"
+#include "Logger.hpp"
 
 extern std::string bot_token;
 
@@ -27,7 +28,7 @@ void GatewayHandler::handle_data(std::string data, client &c, websocketpp::conne
 		on_hello(decoded, c, hdl);
 		break;
 	case 11:
-		c.get_alog().write(websocketpp::log::alevel::app, "Heartbeat acknowledged.");
+		Logger::write("Heartbeat acknowledged", Logger::LogLevel::Debug);
 		break;
 	}
 }
@@ -43,14 +44,14 @@ void GatewayHandler::heartbeat(client *c, websocketpp::connection_hdl hdl, int i
 
 		c->send(hdl, heartbeat.dump(), websocketpp::frame::opcode::text);
 
-		c->get_alog().write(websocketpp::log::alevel::app, "Sent heartbeat. (seq: " + std::to_string(last_seq) + ")");
+		Logger::write("Sent heartbeat (seq: " + std::to_string(last_seq) + ")", Logger::LogLevel::Debug);
 	}
 }
 
 void GatewayHandler::on_hello(json decoded, client &c, websocketpp::connection_hdl &hdl) {
 	heartbeat_interval = decoded["d"]["heartbeat_interval"];
 
-	c.get_alog().write(websocketpp::log::alevel::app, "Heartbeat interval: " + std::to_string(heartbeat_interval / 1000.0f) + " seconds");
+	Logger::write("Heartbeat interval: " + std::to_string(heartbeat_interval / 1000.0f) + " seconds", Logger::LogLevel::Debug);
 
 	heartbeat_thread = std::make_unique<boost::thread>(boost::bind(&GatewayHandler::heartbeat, this, &c, hdl, heartbeat_interval));
 
@@ -65,13 +66,13 @@ void GatewayHandler::on_dispatch(json decoded, client &c, websocketpp::connectio
 	if (event_name == "READY") {
 		user_object.load_from_json(data["user"]);
 
-		c.get_alog().write(websocketpp::log::alevel::app, "Sign-on confirmed. (@" + user_object.username + "#" + user_object.discriminator + ")");
+		Logger::write("Sign-on confirmed. (@" + user_object.username + "#" + user_object.discriminator + ")", Logger::LogLevel::Info);
 	}
 	else if (event_name == "GUILD_CREATE") {
 		std::string guild_id = data["id"];
 		guilds[guild_id] = std::make_unique<DiscordObjects::Guild>(data);
 
-		c.get_alog().write(websocketpp::log::alevel::app, "Loaded guild: " + guilds[guild_id]->name);
+		Logger::write("Loaded guild: " + guilds[guild_id]->name, Logger::LogLevel::Debug);
 		
 		for (json channel : data["channels"]) {
 			std::string channel_id = channel["id"];
@@ -84,8 +85,10 @@ void GatewayHandler::on_dispatch(json decoded, client &c, websocketpp::connectio
 
 		if (v8_instances.count(guild_id) == 0) {
 			v8_instances[guild_id] = std::make_unique<V8Instance>(ah);
-			c.get_alog().write(websocketpp::log::alevel::app, "Created v8 instance for guild " + guild_id);
+			Logger::write("Created v8 instance for guild " + guild_id, Logger::LogLevel::Debug);
 		}
+
+		Logger::write("Loaded " + std::to_string(guilds.size()) + " guild(s)", Logger::LogLevel::Info);
 	}
 	else if (event_name == "TYPING_START") {}
 	else if (event_name == "MESSAGE_CREATE") {
@@ -206,7 +209,7 @@ void GatewayHandler::identify(client &c, websocketpp::connection_hdl &hdl) {
 	};
 
 	c.send(hdl, identify.dump(), websocketpp::frame::opcode::text);
-	c.get_alog().write(websocketpp::log::alevel::app, "Sent identify payload.");
+	Logger::write("Sent identify payload", Logger::LogLevel::Debug);
 }
 
 void GatewayHandler::delete_game(std::string channel_id) {
@@ -217,6 +220,6 @@ void GatewayHandler::delete_game(std::string channel_id) {
 		// remove from map
 		games.erase(it);
 	} else {
-		std::cerr << "Tried to delete a game that didn't exist.";
+		Logger::write("Tried to delete a game that didn't exist (channel_id: " + channel_id + ")", Logger::LogLevel::Warning);
 	}
 }

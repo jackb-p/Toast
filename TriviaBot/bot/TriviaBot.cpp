@@ -3,6 +3,7 @@
 #include <include/v8.h>
 
 #include "ClientConnection.hpp"
+#include "Logger.hpp"
 
 std::string bot_token;
 
@@ -14,6 +15,8 @@ int main(int argc, char *argv[]) {
 	v8::Platform* platform = v8::platform::CreateDefaultPlatform();
 	v8::V8::InitializePlatform(platform);
 	v8::V8::Initialize();
+
+	Logger::write("Initialised V8 and curl", Logger::LogLevel::Debug);
 
 	if (argc == 2) {
 		bot_token = argv[1];
@@ -30,14 +33,14 @@ int main(int argc, char *argv[]) {
 		ClientConnection conn;
 		conn.start(uri);
 	}
-	catch (const std::exception & e) {
-		std::cerr << e.what() << std::endl;
+	catch (const std::exception &e) {
+		Logger::write(e.what(), Logger::LogLevel::Severe);
 	}
 	catch (websocketpp::lib::error_code e) {
-		std::cerr << e.message() << std::endl;
+		Logger::write(e.message(), Logger::LogLevel::Severe);
 	}
 	catch (...) {
-		std::cerr << "other exception" << std::endl;
+		Logger::write("Other exception.", Logger::LogLevel::Severe);
 	}
 
 	v8::V8::Dispose();
@@ -45,6 +48,8 @@ int main(int argc, char *argv[]) {
 	delete platform;
 
 	curl_global_cleanup();
+
+	Logger::write("Cleaned up", Logger::LogLevel::Info);
 
 	return 0;
 }

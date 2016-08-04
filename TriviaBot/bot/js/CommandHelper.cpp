@@ -5,6 +5,8 @@
 
 #include <sqlite3.h>
 
+#include "../Logger.hpp"
+
 CommandHelper::CommandHelper() {
 	sqlite3 *db; int return_code;
 	return_code = sqlite3_open("bot/db/trivia.db", &db);
@@ -32,7 +34,7 @@ CommandHelper::CommandHelper() {
 		}
 	}
 
-	std::cout << commands.size() << " commands loaded." << std::endl;
+	Logger::write(std::to_string(commands.size()) + " custom command loaded", Logger::LogLevel::Info);
 
 	sqlite3_finalize(stmt);
 	sqlite3_close(db);
@@ -145,8 +147,9 @@ bool CommandHelper::command_in_db(std::string guild_id, std::string command_name
 }
 
 bool CommandHelper::return_code_ok(int return_code) {
+	// TODO: NotLikeThis
 	if (return_code != SQLITE_OK) {
-		std::cerr << "SQLite error. " << std::endl;
+		Logger::write("SQLite error", Logger::LogLevel::Severe);
 		return false;
 	}
 	return true;

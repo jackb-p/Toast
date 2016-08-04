@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "GatewayHandler.hpp"
+#include "Logger.hpp"
 
 ClientConnection::ClientConnection() {
 	// Reset the log channels
@@ -58,7 +59,7 @@ void ClientConnection::start(std::string uri) {
 	client::connection_ptr con = c.get_connection(uri, ec);
 
 	if (ec) { // failed to create connection
-		c.get_alog().write(websocketpp::log::alevel::app, ec.message());
+		Logger::write("Failed to create connection: " + ec.message(), Logger::LogLevel::Severe);
 		return;
 	}
 
@@ -69,7 +70,7 @@ void ClientConnection::start(std::string uri) {
 
 // Event handlers
 void ClientConnection::on_socket_init(websocketpp::connection_hdl) {
-	c.get_alog().write(websocketpp::log::alevel::app, "Socket intialised.");
+	Logger::write("Socket initialised", Logger::LogLevel::Debug);
 }
 
 context_ptr ClientConnection::on_tls_init(websocketpp::connection_hdl) {
@@ -81,8 +82,8 @@ context_ptr ClientConnection::on_tls_init(websocketpp::connection_hdl) {
 			boost::asio::ssl::context::no_sslv3 |
 			boost::asio::ssl::context::single_dh_use);
 	}
-	catch (std::exception& e) {
-		std::cout << "Error in context pointer: " << e.what() << std::endl;
+	catch (std::exception &e) {
+		Logger::write("[tls] Error in context pointer: " + std::string(e.what()), Logger::LogLevel::Severe);
 	}
 	return ctx;
 }
@@ -91,23 +92,24 @@ void ClientConnection::on_fail(websocketpp::connection_hdl hdl) {
 	client::connection_ptr con = c.get_con_from_hdl(hdl);
 
 	// Print as much information as possible
-	c.get_elog().write(websocketpp::log::elevel::warn,
-		"Fail handler: \n" +
+	Logger::write("Fail handler: \n" +
 		std::to_string(con->get_state()) + "\n" +
 		std::to_string(con->get_local_close_code()) + "\n" +
 		con->get_local_close_reason() + "\n" +
 		std::to_string(con->get_remote_close_code()) + "\n" +
 		con->get_remote_close_reason() + "\n" +
-		std::to_string(con->get_ec().value()) + " - " + con->get_ec().message() + "\n");
+		std::to_string(con->get_ec().value()) + " - " + con->get_ec().message() + "\n",
+		Logger::LogLevel::Severe);
 }
 
 void ClientConnection::on_open(websocketpp::connection_hdl hdl) {
+	Logger::write("Connection opened", Logger::LogLevel::Debug);
 }
 
 void ClientConnection::on_message(websocketpp::connection_hdl hdl, message_ptr message) {
 	if (message->get_opcode() != websocketpp::frame::opcode::text) {
 		// If the message is not text, just print as hex
-		std::cout << "<< " << websocketpp::utility::to_hex(message->get_payload()) << std::endl;
+		Logger::write("Non-text message received: " + websocketpp::utility::to_hex(message->get_payload()), Logger::LogLevel::Warning);
 		return;
 	}
 
@@ -117,5 +119,5 @@ void ClientConnection::on_message(websocketpp::connection_hdl hdl, message_ptr m
 }
 
 void ClientConnection::on_close(websocketpp::connection_hdl) {
-	std::cout << "Closed." << std::endl;
+	Logger::write("Connection closed", Logger::LogLevel::Info);
 }

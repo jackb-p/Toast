@@ -1,10 +1,11 @@
-#include "http/HTTPHelper.hpp"
+#include "APIHelper.hpp"
 
 #include <cstdio>
 #include <thread>
 #include <chrono>
 
-#include "APIHelper.hpp"
+#include "http/HTTPHelper.hpp"
+#include "Logger.hpp"
 
 using namespace std::chrono_literals;
 
@@ -25,9 +26,14 @@ void APIHelper::send_message(std::string channel_id, std::string message) {
 
 	int retries = 0;
 	while (response_code != 200 && retries < 2) {
+		Logger::write("[send_message] Got non-200 response code, retrying", Logger::LogLevel::Warning);
 		std::this_thread::sleep_for(100ms);
 		// try 3 times. usually enough to prevent 502 bad gateway issues
 		response = http->post_request(url, JSON_CTYPE, data.dump(), &response_code);
 		retries++;
+	}
+
+	if (response_code != 200) {
+		Logger::write("[send_message] Giving up on sending message", Logger::LogLevel::Warning);
 	}
 }

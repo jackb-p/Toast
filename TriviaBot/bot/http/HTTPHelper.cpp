@@ -1,5 +1,7 @@
 #include "HTTPHelper.hpp"
 
+#include "../Logger.hpp"
+
 extern std::string bot_token;
 
 /*
@@ -40,10 +42,10 @@ std::string HTTPHelper::post_request(std::string url, std::string content_type, 
 		if (res == CURLE_OK) {
 			curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, response_code);
 		} else {
+			Logger::write("curl error", Logger::LogLevel::Warning);
 			return "";
 		}
 
-		/* always cleanup */
 		curl_easy_cleanup(curl);
 		curl_slist_free_all(headers);
 	}
