@@ -17,6 +17,22 @@ APIHelper::APIHelper() : BASE_URL("https://discordapp.com/api"), CHANNELS_URL(BA
 void APIHelper::send_message(std::string channel_id, std::string message) {
 	if (message == "") {
 		Logger::write("[send_message] Tried to send empty message", Logger::LogLevel::Warning);
+		return;
+	}
+
+	if (message.length() > 4000) {
+		Logger::write("[send_message] Tried to send a message over 4000 characters", Logger::LogLevel::Warning);
+		return;
+	}
+	else if (message.length() > 2000) {
+		std::cout << message.length() << std::endl;
+
+		std::string first = message.substr(0, 2000);
+		std::string second = message.substr(2000);
+		send_message(channel_id, first);
+		std::this_thread::sleep_for(50ms);
+		send_message(channel_id, second);
+		return;
 	}
 
 	const std::string url = CHANNELS_URL + "/" + channel_id + "/messages";

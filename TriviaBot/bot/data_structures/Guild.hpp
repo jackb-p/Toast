@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 #include "../json/json.hpp"
 
@@ -72,7 +73,7 @@ namespace DiscordObjects {
 		bool unavailable;
 
 		std::vector<Channel *> channels;
-		std::vector<GuildMember> members;
+		std::map<std::string, GuildMember> members;
 		std::vector<Role *> roles;
 		//std::vector<std::unique_ptr<DiscordObjects::User>>    users;
 	};

@@ -58,13 +58,9 @@ namespace DiscordObjects {
 	}
 
 	inline std::string Role::to_debug_string() {
-		std::stringstream colour_ss;
-		colour_ss << std::setw(6) << std::setfill('0') << colour;
-		std::string colour_str = colour_ss.str();
-
 		return "**__Role " + id + "__**"
 			+ "\n**name:** " + name
-			+ "\n**colour:** #" + colour_str
+			+ "\n**colour:** " + std::to_string(colour)
 			+ "\n**hoist:** " + std::to_string(hoist)
 			+ "\n**position:** " + std::to_string(position)
 			+ "\n**permissions:** " + std::to_string(permissions)
