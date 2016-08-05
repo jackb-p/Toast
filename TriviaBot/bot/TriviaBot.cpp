@@ -34,13 +34,13 @@ int main(int argc, char *argv[]) {
 		conn.start(uri);
 	}
 	catch (const std::exception &e) {
-		Logger::write(e.what(), Logger::LogLevel::Severe);
+		Logger::write("std exception: " + std::string(e.what()), Logger::LogLevel::Severe);
 	}
 	catch (websocketpp::lib::error_code e) {
-		Logger::write(e.message(), Logger::LogLevel::Severe);
+		Logger::write("websocketpp exception: " + e.message(), Logger::LogLevel::Severe);
 	}
 	catch (...) {
-		Logger::write("Other exception.", Logger::LogLevel::Severe);
+		Logger::write("other exception.", Logger::LogLevel::Severe);
 	}
 
 	v8::V8::Dispose();
@@ -50,6 +50,9 @@ int main(int argc, char *argv[]) {
 	curl_global_cleanup();
 
 	Logger::write("Cleaned up", Logger::LogLevel::Info);
+
+	std::cout << "Press enter to exit" << std::endl;
+	std::getchar();
 
 	return 0;
 }

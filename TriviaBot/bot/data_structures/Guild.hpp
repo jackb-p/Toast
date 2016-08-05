@@ -1,13 +1,15 @@
-#ifndef BOT_DATA__STRUCTURES_Guild
-#define BOT_DATA__STRUCTURES_Guild
+#ifndef BOT_DATA__STRUCTURES_GUILD
+#define BOT_DATA__STRUCTURES_GUILD
 
 #include <string>
-#include <memory>
+#include <vector>
 
 #include "../json/json.hpp"
 
 #include "Channel.hpp"
 #include "User.hpp"
+#include "Role.hpp"
+#include "GuildMember.hpp"
 
 using json = nlohmann::json;
 
@@ -48,6 +50,7 @@ namespace DiscordObjects {
 		Guild(json data);
 
 		void load_from_json(json data);
+		std::string to_debug_string();
 
 		bool operator==(Guild rhs);
 
@@ -62,13 +65,15 @@ namespace DiscordObjects {
 		// bool        embed_enabled;
 		// std::string	embed_channel_id;
 		int         verification_level;
-		// TODO: Implement all guil fields
+		// TODO: Implement all guild fields
 		// std::vector<?> voice_states
-		// std::vector<?> roles
 		// std::vector<?> emojis
 		// std::vector<?> features
+		bool unavailable;
 
-		std::vector<std::shared_ptr<Channel>> channels;
+		std::vector<Channel *> channels;
+		std::vector<GuildMember> members;
+		std::vector<Role *> roles;
 		//std::vector<std::unique_ptr<DiscordObjects::User>>    users;
 	};
 
@@ -93,6 +98,23 @@ namespace DiscordObjects {
 		afk_channel_id = data.value("afk_channel_id", "null");
 		afk_timeout = data.value("afk_timeout", -1);
 		verification_level = data.value("verification_level", -1);
+		unavailable = data.value("unavailable", false);
+	}
+
+	inline std::string Guild::to_debug_string() {
+		return "**__Guild " + id + "__**"
+			+ "\n**name:** " + name
+			+ "\n**icon:** " + icon
+			+ "\n**splash:** " + splash
+			+ "\n**owner_id:** " + owner_id
+			+ "\n**region:** " + region
+			+ "\n**afk_channel_id:** " + afk_channel_id
+			+ "\n**afk_timeout:** " + std::to_string(afk_timeout)
+			+ "\n**verification_level:** " + std::to_string(verification_level)
+			+ "\n**unavailable:** " + std::to_string(unavailable)
+			+ "\n**channels:** " + std::to_string(channels.size())
+			+ "\n**roles:** " + std::to_string(roles.size())
+			+ "\n**members:** " + std::to_string(members.size());
 	}
 
 	inline bool Guild::operator==(Guild rhs) {

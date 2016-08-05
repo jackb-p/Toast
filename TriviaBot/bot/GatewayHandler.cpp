@@ -3,8 +3,8 @@
 #include <boost/algorithm/string.hpp>
 
 #include "APIHelper.hpp"
-#include "data_structures/User.hpp"
 #include "Logger.hpp"
+#include "data_structures/GuildMember.hpp"
 
 extern std::string bot_token;
 
@@ -64,130 +64,481 @@ void GatewayHandler::on_dispatch(json decoded, client &c, websocketpp::connectio
 	json data = decoded["d"];
 
 	if (event_name == "READY") {
-		user_object.load_from_json(data["user"]);
-
-		Logger::write("Sign-on confirmed. (@" + user_object.username + "#" + user_object.discriminator + ")", Logger::LogLevel::Info);
+		on_event_ready(data);
 	}
 	else if (event_name == "GUILD_CREATE") {
-		std::string guild_id = data["id"];
-		guilds[guild_id] = std::make_unique<DiscordObjects::Guild>(data);
-
-		Logger::write("Loaded guild: " + guilds[guild_id]->name, Logger::LogLevel::Debug);
-		
-		for (json channel : data["channels"]) {
-			std::string channel_id = channel["id"];
-			channel["guild_id"] = guild_id;
-			// create channel obj, add to overall channel list
-			channels[channel_id] = std::make_shared<DiscordObjects::Channel>(channel);
-			// add ptr to said channel list to guild's channel list
-			guilds[guild_id]->channels.push_back(std::shared_ptr<DiscordObjects::Channel>(channels[channel_id]));
-		}
-
-		if (v8_instances.count(guild_id) == 0) {
-			v8_instances[guild_id] = std::make_unique<V8Instance>(ah);
-			Logger::write("Created v8 instance for guild " + guild_id, Logger::LogLevel::Debug);
-		}
-
-		Logger::write("Loaded " + std::to_string(guilds.size()) + " guild(s)", Logger::LogLevel::Info);
+		on_event_guild_create(data);
 	}
-	else if (event_name == "TYPING_START") {}
+	else if (event_name == "GUILD_UPDATE") {
+		on_event_guild_update(data);
+	}
+	else if (event_name == "GUILD_DELETE") {
+		on_event_guild_delete(data);
+	}
+	else if (event_name == "GUILD_MEMBER_ADD") {
+		on_event_guild_member_add(data);
+	}
+	else if (event_name == "GUILD_MEMBER_UPDATE") {
+		on_event_guild_member_update(data);
+	}
+	else if (event_name == "GUILD_MEMBER_REMOVE") {
+		on_event_guild_member_remove(data);
+	}
+	else if (event_name == "GUILD_ROLE_CREATE") {
+		on_event_guild_role_create(data);
+	}
+	else if (event_name == "GUILD_ROLE_UPDATE") {
+		on_event_guild_role_update(data);
+	}
+	else if (event_name == "GUILD_ROLE_DELETE") {
+		on_event_guild_role_delete(data);
+	}
+	else if (event_name == "CHANNEL_CREATE") {
+		on_event_channel_create(data);
+	}
+	else if (event_name == "CHANNEL_UPDATE") {
+		on_event_channel_update(data);
+	}
+	else if (event_name == "CHANNEL_DELETE") {
+		on_event_channel_delete(data);
+	}
 	else if (event_name == "MESSAGE_CREATE") {
-		std::string message = data["content"];
-		auto channel = channels[data["channel_id"]];
+		on_event_message_create(data);
+	}
+}
 
-		DiscordObjects::User sender(data["author"]);
+void GatewayHandler::on_event_ready(json data) {
+	user_object.load_from_json(data["user"]);
 
-		std::vector<std::string> words;
-		boost::split(words, message, boost::is_any_of(" "));
-		Command custom_command;
-		if (words[0] == "`trivia" || words[0] == "`t") {
-			int questions = 10;
-			int delay = 8;
+	Logger::write("Sign-on confirmed. (@" + user_object.username + "#" + user_object.discriminator + ")", Logger::LogLevel::Info);
+}
 
-			if (words.size() > 3) {
-				ah->send_message(channel->id, ":exclamation: Invalid arguments!");
+void GatewayHandler::on_event_guild_create(json data) {
+	guilds[data["id"]] = DiscordObjects::Guild(data);
+	DiscordObjects::Guild &guild = guilds[data["id"]];
+
+	Logger::write("Loaded guild " + guild.id + ", now in " + std::to_string(guilds.size()) + " guild(s)", Logger::LogLevel::Info);
+
+	int channels_added = 0, roles_added = 0, members_added = 0;
+
+	for (json channel : data["channels"]) {
+		std::string channel_id = channel["id"];
+		channel["guild_id"] = guild.id;
+
+		channels[channel_id] = DiscordObjects::Channel(channel);
+		guilds[guild.id].channels.push_back(&channels[channel_id]);
+
+		channels_added++;
+	}
+	for (json role : data["roles"]) {
+		std::string role_id = role["id"];
+
+		roles[role_id] = DiscordObjects::Role(role);
+		guilds[guild.id].roles.push_back(&roles[role_id]);
+
+		roles_added++;
+	}
+	for (json member : data["members"]) {
+		std::string user_id = member["user"]["id"];
+
+		auto it = users.find(user_id);
+		if (it == users.end()) { // new user
+			users[user_id] = DiscordObjects::User(member["user"]);
+		}
+		users[user_id].guilds.push_back(guild.id);
+
+		DiscordObjects::GuildMember guild_member(member, &users[user_id]);
+		for (std::string role_id : member["roles"]) {
+			guild_member.roles.push_back(&roles[role_id]);
+		}
+
+		guilds[guild.id].members.push_back(guild_member);
+	}
+
+	if (v8_instances.count(guild.id) == 0) {
+		v8_instances[guild.id] = std::make_unique<V8Instance>(ah);
+		Logger::write("Created v8 instance for guild " + guild.id, Logger::LogLevel::Debug);
+	}
+
+	Logger::write("Loaded " + std::to_string(channels_added) + " channels, " + std::to_string(roles_added) 
+		+ " roles and " + std::to_string(members_added) + " members to guild " + guild.id, Logger::LogLevel::Debug);
+}
+
+void GatewayHandler::on_event_guild_update(json data) {
+	std::string guild_id = data["id"];
+
+	guilds[guild_id].load_from_json(data);
+	Logger::write("Updated guild " + guild_id, Logger::LogLevel::Debug);
+}
+
+void GatewayHandler::on_event_guild_delete(json data) {
+	std::string guild_id = data["id"];
+	bool unavailable = data.value("unavailable", false);
+
+	if (unavailable) {
+		Logger::write("Guild " + guild_id + " has become unavailable", Logger::LogLevel::Info);
+		guilds[guild_id].unavailable = true;
+	} else {
+		int channels_removed = 0;
+		for (auto it = channels.cbegin(); it != channels.cend();) {
+			if (it->second.guild_id == guild_id) {
+				channels.erase(it++);
+				channels_removed++;
+			} else {
+				++it;
+			}
+		}
+
+		guilds.erase(guilds.find(guild_id));
+		Logger::write("Guild " + guild_id + " and " + std::to_string(channels_removed) + " channels removed", Logger::LogLevel::Info);
+	}
+}
+
+void GatewayHandler::on_event_guild_member_add(json data) {
+	std::string guild_id = data["guild_id"];
+	std::string user_id = data["user"]["id"];
+
+	auto it = users.find(user_id);
+	if (it == users.end()) { // new user
+		users[user_id] = DiscordObjects::User(data["user"]);
+	}
+	users[user_id].guilds.push_back(guild_id);
+
+	DiscordObjects::GuildMember guild_member(data, &users[user_id]);
+	for (std::string role_id : data["roles"]) {
+		guild_member.roles.push_back(&roles[role_id]);
+	}
+
+	guilds[guild_id].members.push_back(guild_member);
+
+	Logger::write("Added new member " + guild_member.user->id + " to guild " + guild_id, Logger::LogLevel::Debug);
+}
+
+void GatewayHandler::on_event_guild_member_update(json data) {
+	std::cout << data.dump(4) << std::endl;
+
+	std::string user_id = data["user"]["id"];
+	DiscordObjects::Guild &guild = guilds[data["guild_id"]];
+
+	auto it = std::find_if(guild.members.begin(), guild.members.begin(), [user_id](const DiscordObjects::GuildMember &gm) {
+		return gm.user->id == user_id;
+	});
+	if (it != guild.members.end()) {
+		bool nick_changed = false;
+		size_t roles_change = 0;
+
+		std::string nick = data.value("nick", it->nick);
+		if (it->nick != nick) {
+			it->nick = nick;
+			nick_changed = true;
+		}
+
+		roles_change = it->roles.size();
+		it->roles.clear(); // reset and re-fill, changing the differences is probably more expensive anyway.
+		for (std::string role_id : data["roles"]) {
+			it->roles.push_back(&roles[role_id]);
+		}
+		roles_change = it->roles.size() - roles_change;
+		
+		std::string debug_string = "Updated member " + user_id + " of guild " + guild.id;
+		if (nick_changed) debug_string += ". Nick changed to " + nick;
+		if (roles_change != 0) debug_string += ". No. of roles changed by " + std::to_string(roles_change);
+		debug_string += ".";
+
+		Logger::write(debug_string, Logger::LogLevel::Debug);
+	}
+	else {
+		Logger::write("Tried to update member " + user_id + " (of guild " + guild.id + ") who does not exist.", Logger::LogLevel::Warning);
+	}
+}
+
+void GatewayHandler::on_event_guild_member_remove(json data) {
+	DiscordObjects::Guild &guild = guilds[data["guild_id"]];
+	std::string user_id = data["user"]["id"];
+
+	auto it = std::find_if(guild.members.begin(), guild.members.begin(), [user_id](const DiscordObjects::GuildMember &gm) {
+		return gm.user->id == user_id;
+	});
+
+	if (it != guilds[guild.id].members.end()) {
+		guild.members.erase(it);
+		
+		DiscordObjects::User &user = users[user_id];
+		user.guilds.erase(std::remove(user.guilds.begin(), user.guilds.end(), user.id));
+
+		if (user.guilds.size() == 0) {
+			users.erase(users.find(user_id));
+			Logger::write("User " + user_id + " removed from guild " + guild.id + " and no longer visible, deleted.", Logger::LogLevel::Debug);
+		}
+		else {
+			Logger::write("User " + user_id + " removed from guild " + guild.id, Logger::LogLevel::Debug);
+		}
+	}
+	else {
+		Logger::write("Tried to remove guild member " + user_id + " which doesn't exist", Logger::LogLevel::Warning);
+	}
+}
+
+void GatewayHandler::on_event_guild_role_create(json data) {
+	std::string role_id = data["role"]["id"];
+	std::string guild_id = data["guild_id"];
+	roles[role_id] = DiscordObjects::Role(data["role"]);
+
+	guilds[guild_id].roles.push_back(&roles[role_id]);
+
+	Logger::write("Created role " + role_id + " on guild " + guild_id, Logger::LogLevel::Debug);
+}
+
+void GatewayHandler::on_event_guild_role_update(json data) {
+	std::string role_id = data["role"]["id"];
+
+	roles[role_id].load_from_json(data["role"]);
+}
+
+void GatewayHandler::on_event_guild_role_delete(json data) {
+	std::string role_id = data["role_id"];
+	auto it = roles.find(role_id);
+
+	if (it != roles.end()) {
+		DiscordObjects::Role &role = roles[role_id];
+		DiscordObjects::Guild &guild = guilds[data["guild_id"]];
+
+		auto check_lambda = [role_id](const DiscordObjects::Role *r) {
+			return r->id == role_id;
+		};
+
+		auto it2 = std::find_if(guild.roles.begin(), guild.roles.end(), check_lambda);
+		if (it2 != guild.roles.end()) {
+			guild.roles.erase(it2);
+		}
+		else {
+			Logger::write("Tried to delete role " + role_id + " from guild " + guild.id + " but it doesn't exist there", Logger::LogLevel::Warning);
+		}
+
+		roles.erase(it);
+		Logger::write("Deleted role " + role_id + " (guild " + guild.id + ").", Logger::LogLevel::Debug);
+	}
+	else {
+		Logger::write("Tried to delete role " + role_id + " but it doesn't exist.", Logger::LogLevel::Warning);
+	}
+}
+
+void GatewayHandler::on_event_channel_create(json data) {
+	std::string channel_id = data["id"];
+	std::string guild_id = data["guild_id"];
+
+	channels[channel_id] = DiscordObjects::Channel(data);
+	Logger::write("Added channel " + channel_id + " to channel list. Now " + std::to_string(channels.size()) + " channels stored", Logger::LogLevel::Debug);
+	guilds[guild_id].channels.push_back(&channels[channel_id]);
+	Logger::write("Added channel " + channel_id + " to guild " + guild_id + "'s list. Now " + std::to_string(guilds[guild_id].channels.size()) + " channels stored", Logger::LogLevel::Debug);
+}
+
+void GatewayHandler::on_event_channel_update(json data) {
+	std::cout << "Update: " << data.dump(4) << std::endl;
+
+	std::string channel_id = data["id"];
+
+	auto it = channels.find(channel_id);
+	if (it == channels.end()) {
+		Logger::write("Got channel update for channel " + channel_id + " that doesn't exist. Creating channel instead.", Logger::LogLevel::Warning);
+		on_event_channel_create(data);
+	} else {
+		channels[channel_id].load_from_json(data);
+		Logger::write("Updated channel " + channel_id, Logger::LogLevel::Debug);
+	}
+}
+
+void GatewayHandler::on_event_channel_delete(json data) {
+	std::cout << "Delete: " << data.dump(4) << std::endl;
+
+	std::string channel_id = data["id"];
+	std::string guild_id = data["guild_id"];
+
+	auto it = channels.find(channel_id);
+	if (it == channels.end()) {
+		Logger::write("Tried to delete channel " + channel_id + " which doesn't exist", Logger::LogLevel::Warning);
+	}
+	else {
+		auto it2 = std::find_if(guilds[guild_id].channels.begin(), guilds[guild_id].channels.begin(), [channel_id](const DiscordObjects::Channel *c) {
+			return c->id == channel_id;
+		});
+		guilds[guild_id].channels.erase(it2);
+		Logger::write("Removed channel " + channel_id + " from guild " + guild_id + "'s list. Now " 
+			+ std::to_string(guilds[guild_id].channels.size()) + " channels stored", Logger::LogLevel::Debug);
+
+		channels.erase(it);
+		Logger::write("Removed channel " + channel_id + " from channel list. Now " + std::to_string(channels.size()) + " channels stored.", Logger::LogLevel::Debug);
+	}
+}
+
+void GatewayHandler::on_event_message_create(json data) {
+	std::string message = data["content"];
+	auto channel = channels[data["channel_id"]];
+
+	DiscordObjects::User sender(data["author"]);
+
+	std::vector<std::string> words;
+	boost::split(words, message, boost::is_any_of(" "));
+	Command custom_command;
+	if (words[0] == "`trivia" || words[0] == "`t") {
+		int questions = 10;
+		int delay = 8;
+
+		if (words.size() > 3) {
+			ah->send_message(channel.id, ":exclamation: Invalid arguments!");
+			return;
+		}
+		else  if (words.size() > 1) {
+			if (words[1] == "help" || words[1] == "h") {
+				std::string help = "**Base command \\`t[rivia]**. Arguments:\n";
+				help += "\\`trivia **{x}** **{y}**: Makes the game last **x** number of questions, optionally sets the time interval between hints to **y** seconds\n";
+				help += "\\`trivia **stop**: stops the ongoing game.\n";
+				help += "\\`trivia **help**: prints this message\n";
+
+				ah->send_message(channel.id, help);
 				return;
 			}
-			else  if(words.size() > 1) {
-				if (words[1] == "help" || words[1] == "h") {
-					std::string help = "**Base command \\`t[rivia]**. Arguments:\n";
-					help += "\\`trivia **{x}** **{y}**: Makes the game last **x** number of questions, optionally sets the time interval between hints to **y** seconds\n";
-					help += "\\`trivia **stop**: stops the ongoing game.\n";
-					help += "\\`trivia **help**: prints this message\n";
-
-					ah->send_message(channel->id, help);
+			else if (words[1] == "stop" || words[1] == "s") {
+				if (games.find(channel.id) != games.end()) {
+					delete_game(channel.id);
 					return;
 				}
-				else if (words[1] == "stop" || words[1] == "s") {
-					if (games.find(channel->id) != games.end()) {
-						delete_game(channel->id);
-						return;
+			}
+			else {
+				try {
+					questions = std::stoi(words[1]);
+					if (words.size() == 3) {
+						delay = std::stoi(words[2]);
 					}
+				}
+				catch (std::invalid_argument e) {
+					ah->send_message(channel.id, ":exclamation: Invalid arguments!");
+					return;
+				}
+			}
+		}
+
+		games[channel.id] = std::make_unique<TriviaGame>(this, ah, channel.id, questions, delay);
+		games[channel.id]->start();
+	}
+	else if (words[0] == "`guilds") {
+		std::string m = "Guild List:\n";
+		for (auto &gu : guilds) {
+			m += "> " + gu.second.name + " (" + gu.second.id + ") Channels: " + std::to_string(gu.second.channels.size()) + "\n";
+		}
+		ah->send_message(channel.id, m);
+	}
+	else if (words[0] == "`info") {
+		ah->send_message(channel.id, ":information_source: trivia-bot by Jack. <http://github.com/jackb-p/TriviaDiscord>");
+	}
+	else if (words[0] == "`js" && message.length() > 4) {
+		std::string js = message.substr(4);
+		auto it = v8_instances.find(channel.guild_id);
+		if (it != v8_instances.end() && js.length() > 0) {
+			it->second->exec_js(js, channel.id);
+		}
+	}
+	else if (words[0] == "`createjs" && message.length() > 8) {
+		std::string args = message.substr(10);
+		size_t seperator_loc = args.find("|");
+		if (seperator_loc != std::string::npos) {
+			std::string command_name = args.substr(0, seperator_loc);
+			std::string script = args.substr(seperator_loc + 1);
+			int result = command_helper->insert_command(channel.guild_id, command_name, script);
+			switch (result) {
+			case 0:
+				ah->send_message(channel.id, ":warning: Error!"); break;
+			case 1:
+				ah->send_message(channel.id, ":new: Command `" + command_name + "` successfully created."); break;
+			case 2:
+				ah->send_message(channel.id, ":arrow_heading_up: Command `" + command_name + "` successfully updated."); break;
+			}
+		}
+	}
+	else if (words[0] == "`shutdown" && sender.id == "82232146579689472") { // it me
+		ah->send_message(channel.id, ":zzz: Goodbye!");
+		// TODO: without needing c, hdl - c.close(hdl, websocketpp::close::status::going_away, "`shutdown command used.");
+	}
+	else if (words[0] == "`debug") {
+		if (words[1] == "channel" && words.size() == 3) {
+			auto it = channels.find(words[2]);
+			if (it != channels.end()) {
+				ah->send_message(channel.id, it->second.to_debug_string());
+			}
+			else {
+				ah->send_message(channel.id, ":question: Unrecognised channel.");
+			}
+		}
+		else if (words[1] == "guild" && words.size() == 3) {
+			auto it = guilds.find(words[2]);
+			if (it != guilds.end()) {
+				ah->send_message(channel.id, it->second.to_debug_string());
+			}
+			else {
+				ah->send_message(channel.id, ":question: Unrecognised guild.");
+			}
+		}
+		else if (words[1] == "member" && words.size() == 4) {
+			auto it = guilds.find(words[2]);
+			if (it != guilds.end()) {
+				std::string user_id = words[3];
+				auto it2 = std::find_if(it->second.members.begin(), it->second.members.end(), [user_id](const DiscordObjects::GuildMember &gm) {
+					return user_id == gm.user->id;
+				});
+
+				if (it2 != it->second.members.end()) {
+					ah->send_message(channel.id, it2->to_debug_string());
 				}
 				else {
-					try {
-						questions = std::stoi(words[1]);
-						if (words.size() == 3) {
-							delay = std::stoi(words[2]);
-						}
-					}
-					catch (std::invalid_argument e) {
-						ah->send_message(channel->id, ":exclamation: Invalid arguments!");
-						return;
-					}
+					ah->send_message(channel.id, ":question: Unrecognised user.");
 				}
 			}
+			else {
+				ah->send_message(channel.id, ":question: Unrecognised guild.");
+			}
+		}
+		else if (words[1] == "role" && words.size() == 3) {
+			auto it = roles.find(words[2]);
+			if (it != roles.end()) {
+				ah->send_message(channel.id, it->second.to_debug_string());
+			}
+			else {
+				ah->send_message(channel.id, ":question: Unrecognised role.");
+			}
+		}
+		else if (words[1] == "role" && words.size() == 4) {
+			std::string role_name = words[3];
 
-			games[channel->id] = std::make_unique<TriviaGame>(this, ah, channel->id, questions, delay);
-			games[channel->id]->start();
-		} 
-		else if (words[0] == "`guilds") {
-			std::string m = "Guild List:\n";
-			for (auto &gu : guilds) {
-				m += "> " + gu.second->name + " (" + gu.second->id + ") Channels: " + std::to_string(gu.second->channels.size()) + "\n";
-			}
-			ah->send_message(channel->id, m);
-		}
-		else if (words[0] == "`info") {
-			ah->send_message(channel->id, ":information_source: trivia-bot by Jack. <http://github.com/jackb-p/TriviaDiscord>");
-		}
-		else if (words[0] == "`js" && message.length() > 4) {
-			std::string js = message.substr(4);
-			auto it = v8_instances.find(channel->guild_id);
-			if (it != v8_instances.end() && js.length() > 0) {
-				it->second->exec_js(js, channel->id);
-			}
-		}
-		else if (words[0] == "`createjs" && message.length() > 8) {
-			std::string args = message.substr(10);
-			size_t seperator_loc = args.find("|");
-			if (seperator_loc != std::string::npos) {
-				std::string command_name = args.substr(0, seperator_loc);
-				std::string script = args.substr(seperator_loc + 1);
-				int result = command_helper->insert_command(channel->guild_id, command_name, script); 
-				switch (result) {
-				case 0:
-					ah->send_message(channel->id, ":warning: Error!"); break;
-				case 1:
-					ah->send_message(channel->id, ":new: Command `" + command_name + "` successfully created."); break;
-				case 2:
-					ah->send_message(channel->id, ":arrow_heading_up: Command `" + command_name + "` successfully updated."); break;
+			auto it = guilds.find(words[2]);
+			if (it != guilds.end()) {
+				auto check_lambda = [role_name](DiscordObjects::Role *r) {
+					return role_name == r->name;
+				};
+
+				auto it2 = std::find_if(it->second.roles.begin(), it->second.roles.end(), check_lambda);
+				if (it2 != it->second.roles.end()) {
+					ah->send_message(channel.id, (*it2)->to_debug_string());
+				}
+				else {
+					ah->send_message(channel.id, ":question: Unrecognised role.");
 				}
 			}
-		}
-		else if (words[0] == "`shutdown" && sender.id == "82232146579689472") { // it me
-			ah->send_message(channel->id, ":zzz: Goodbye!");
-			c.close(hdl, websocketpp::close::status::going_away, "`shutdown command used.");
-		}
-		else if (command_helper->get_command(channel->guild_id, words[0], custom_command)) {
-			auto it = v8_instances.find(channel->guild_id);
-			if (it != v8_instances.end() && custom_command.script.length() > 0) {
-				it->second->exec_js(custom_command.script, channel->id);
+			else {
+				ah->send_message(channel.id, ":question: Unrecognised guild.");
 			}
 		}
-		else if (games.find(channel->id) != games.end()) { // message received in channel with ongoing game
-			games[channel->id]->handle_answer(message, sender);
+		else {
+			ah->send_message(channel.id, ":question: Unknown parameters.");
 		}
+	}
+	else if (command_helper->get_command(channel.guild_id, words[0], custom_command)) {
+		auto it = v8_instances.find(channel.guild_id);
+		if (it != v8_instances.end() && custom_command.script.length() > 0) {
+			it->second->exec_js(custom_command.script, channel.id);
+		}
+	}
+	else if (games.find(channel.id) != games.end()) { // message received in channel with ongoing game
+		games[channel.id]->handle_answer(message, sender);
 	}
 }
 

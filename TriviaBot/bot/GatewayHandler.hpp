@@ -14,6 +14,7 @@
 #include "data_structures/User.hpp"
 #include "data_structures/Guild.hpp"
 #include "data_structures/Channel.hpp"
+#include "data_structures/Role.hpp"
 
 typedef websocketpp::client<websocketpp::config::asio_tls_client> client;
 using json = nlohmann::json;
@@ -58,6 +59,27 @@ private:
 	int last_seq;
 	int heartbeat_interval;
 
+	void on_event_ready(json data);
+
+	/* guild events */
+	void on_event_guild_create(json data); // https://discordapp.com/developers/docs/topics/gateway#guild-create
+	void on_event_guild_update(json data); // https://discordapp.com/developers/docs/topics/gateway#guild-update
+	void on_event_guild_delete(json data); // https://discordapp.com/developers/docs/topics/gateway#guild-delete
+	void on_event_guild_member_add(json data); // https://discordapp.com/developers/docs/topics/gateway#guild-member-add
+	void on_event_guild_member_update(json data); // https://discordapp.com/developers/docs/topics/gateway#guild-member-update
+	void on_event_guild_member_remove(json data); // https://discordapp.com/developers/docs/topics/gateway#guild-member-remove
+	void on_event_guild_role_create(json data); // https://discordapp.com/developers/docs/topics/gateway#guild-role-create
+	void on_event_guild_role_update(json data); // https://discordapp.com/developers/docs/topics/gateway#guild-role-update
+	void on_event_guild_role_delete(json data); // https://discordapp.com/developers/docs/topics/gateway#guild-role-delete
+
+	/* channel events */
+	void on_event_channel_create(json data); // https://discordapp.com/developers/docs/topics/gateway#channel-create
+	void on_event_channel_update(json data); // https://discordapp.com/developers/docs/topics/gateway#channel-update
+	void on_event_channel_delete(json data); // https://discordapp.com/developers/docs/topics/gateway#channel-delete
+
+	/* message events */
+	void on_event_message_create(json data); // https://discordapp.com/developers/docs/topics/gateway#message-create
+
 	const int protocol_version = 5;
 
 	// bot's user obj
@@ -65,10 +87,11 @@ private:
 
 	std::unique_ptr<CommandHelper> command_helper;
 
-	// <id, ptr to data>
-	std::map<std::string, std::unique_ptr<DiscordObjects::Guild>> guilds;
-	// channels pointers are shared pointers, held here but also in guild objects
-	std::map<std::string, std::shared_ptr<DiscordObjects::Channel>> channels;
+	/* <id, obj> */
+	std::map<std::string, DiscordObjects::Guild> guilds;
+	std::map<std::string, DiscordObjects::Channel> channels;
+	std::map<std::string, DiscordObjects::User> users;
+	std::map<std::string, DiscordObjects::Role> roles;
 
 	// <channel_id, game obj>
 	std::map<std::string, std::unique_ptr<TriviaGame>> games;

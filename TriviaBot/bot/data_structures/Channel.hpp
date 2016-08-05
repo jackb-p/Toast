@@ -32,6 +32,7 @@ namespace DiscordObjects {
 		Channel(json data);
 
 		void load_from_json(json data);
+		std::string to_debug_string();
 
 		bool operator==(Channel rhs);
 
@@ -71,6 +72,19 @@ namespace DiscordObjects {
 		last_message_id = data.value("last_message_id", "null");
 		bitrate = data.value("bitrate", -1);
 		user_limit = data.value("user_limit", -1);
+	}
+
+	inline std::string Channel::to_debug_string() {
+		return "**__Channel " + id + "__**"
+			+ "\n**guild_id:** " + guild_id
+			+ "\n**name:** " + name
+			+ "\n**type:** " + type
+			+ "\n**position:** " + std::to_string(position)
+			+ "\n**is_private:** " + std::to_string(is_private)
+			+ "\n**topic:** " + (topic == "" ? "[empty]" : topic)
+			+ "\n**last_message_id:** " + last_message_id
+			+ "\n**bitrate:** " + std::to_string(bitrate)
+			+ "\n**user_limit:** " + std::to_string(user_limit);
 	}
 
 	inline bool Channel::operator==(Channel rhs) {
