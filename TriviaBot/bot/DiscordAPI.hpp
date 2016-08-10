@@ -9,18 +9,9 @@ using json = nlohmann::json;
 
 class HTTPHelper;
 
-class APIHelper {
-public:
-	APIHelper();
-
+namespace DiscordAPI {
+	json get_gateway();
 	void send_message(std::string channel_id, std::string message);
-
-private:
-	const std::string BASE_URL;
-	const std::string CHANNELS_URL;
-	const std::string JSON_CTYPE;
-
-	HTTPHelper *http;
-};
+}
 
 #endif

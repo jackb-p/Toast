@@ -42,7 +42,7 @@ namespace DiscordObjects {
 		mentionable = false;
 	}
 
-	inline Role::Role(json data) {
+	inline Role::Role(json data) : Role() {
 		load_from_json(data);
 	}
 

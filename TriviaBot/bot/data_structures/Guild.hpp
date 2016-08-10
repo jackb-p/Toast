@@ -73,7 +73,7 @@ namespace DiscordObjects {
 		bool unavailable;
 
 		std::vector<Channel *> channels;
-		std::map<std::string, GuildMember> members;
+		std::vector<GuildMember *> members;
 		std::vector<Role *> roles;
 		//std::vector<std::unique_ptr<DiscordObjects::User>>    users;
 	};
@@ -83,13 +83,11 @@ namespace DiscordObjects {
 		afk_timeout = verification_level = -1;
 	}
 
-	inline Guild::Guild(json data) {
+	inline Guild::Guild(json data) : Guild() {
 		load_from_json(data);
 	}
 
 	inline void Guild::load_from_json(json data) {
-		Guild();
-
 		id = data.value("id", "null");
 		name = data.value("name", "null");
 		icon = data.value("icon", "null");

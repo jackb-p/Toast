@@ -45,21 +45,24 @@ public:
 
 	void handle_data(std::string data, client &c, websocketpp::connection_hdl &hdl);
 
-	void heartbeat(client *c, websocketpp::connection_hdl hdl, int interval);
-
-	void on_hello(json decoded, client &c, websocketpp::connection_hdl &hdl);
-
-	void on_dispatch(json decoded, client &c, websocketpp::connection_hdl &hdl);
-
-	void identify(client &c, websocketpp::connection_hdl &hdl);
-
 	void delete_game(std::string channel_id);
 
 private:
 	int last_seq;
 	int heartbeat_interval;
 
-	void on_event_ready(json data);
+	/* payload dispatchers */
+	void send_heartbeat(client *c, websocketpp::connection_hdl hdl, int interval);
+	void send_identify(client &c, websocketpp::connection_hdl &hdl);
+	void send_request_guild_members(client &c, websocketpp::connection_hdl &hdl, std::string guild_id); // not sure if required atm
+
+	/* payload handlers */
+	void on_hello(json decoded, client &c, websocketpp::connection_hdl &hdl);
+	void on_dispatch(json decoded, client &c, websocketpp::connection_hdl &hdl);
+
+	/* misc events */
+	void on_event_ready(json data); // https://discordapp.com/developers/docs/topics/gateway#ready
+	void on_event_presence_update(json data); // https://discordapp.com/developers/docs/topics/gateway#presence-update
 
 	/* guild events */
 	void on_event_guild_create(json data); // https://discordapp.com/developers/docs/topics/gateway#guild-create
@@ -85,8 +88,6 @@ private:
 	// bot's user obj
 	DiscordObjects::User user_object;
 
-	std::unique_ptr<CommandHelper> command_helper;
-
 	/* <id, obj> */
 	std::map<std::string, DiscordObjects::Guild> guilds;
 	std::map<std::string, DiscordObjects::Channel> channels;
@@ -99,8 +100,6 @@ private:
 	std::map<std::string, std::unique_ptr<V8Instance>> v8_instances;
 
 	std::unique_ptr<boost::thread> heartbeat_thread;
-
-	std::shared_ptr<APIHelper> ah;
 };
 
 #endif

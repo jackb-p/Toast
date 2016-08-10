@@ -57,7 +57,7 @@ namespace DiscordObjects {
 		type = "text";
 	}
 
-	inline Channel::Channel(json data) {
+	inline Channel::Channel(json data) : Channel() {
 		load_from_json(data);
 	}
 

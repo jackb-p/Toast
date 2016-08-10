@@ -30,13 +30,12 @@ namespace DiscordObjects {
 
 	inline GuildMember::GuildMember() {
 		user = nullptr;
-		nick = "null";
-		joined_at = "null";
+		nick = joined_at = "null";
 		deaf = false;
 		mute = false;
 	}
 
-	inline GuildMember::GuildMember(json data, User *user) {
+	inline GuildMember::GuildMember(json data, User *user) : GuildMember() {
 		this->user = user;
 		load_from_json(data);
 	}
@@ -54,6 +53,8 @@ namespace DiscordObjects {
 			+ "\n**bot:** " + std::to_string(user->bot)
 			+ "\n**mfa_enabled:** " + std::to_string(user->mfa_enabled)
 			+ "\n**avatar:** " + user->avatar
+			+ "\n**status:** " + user->status
+			+ "\n**game name:** " + user->game
 			+ "\n**nick:** " + nick
 			+ "\n**joined_at:** " + joined_at
 			+ "\n**deaf:** " + std::to_string(deaf)

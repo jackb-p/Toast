@@ -4,6 +4,7 @@
 
 #include "ClientConnection.hpp"
 #include "Logger.hpp"
+#include "DiscordAPI.hpp"
 
 std::string bot_token;
 
@@ -26,21 +27,26 @@ int main(int argc, char *argv[]) {
 		std::cin >> bot_token;
 	}
 
-	// todo: get this using API
-	std::string uri = "wss://gateway.discord.gg/?v=5&encoding=json";
+	std::string args = "/?v=5&encoding=json";
+	std::string url = DiscordAPI::get_gateway().value("url", "wss://gateway.discord.gg");
 
-	try {
-		ClientConnection conn;
-		conn.start(uri);
-	}
-	catch (const std::exception &e) {
-		Logger::write("std exception: " + std::string(e.what()), Logger::LogLevel::Severe);
-	}
-	catch (websocketpp::lib::error_code e) {
-		Logger::write("websocketpp exception: " + e.message(), Logger::LogLevel::Severe);
-	}
-	catch (...) {
-		Logger::write("other exception.", Logger::LogLevel::Severe);
+	bool retry = true;
+	while (retry) {
+		try {
+			ClientConnection conn;
+			conn.start(url + args);
+		}
+		catch (const std::exception &e) {
+			Logger::write("std exception: " + std::string(e.what()), Logger::LogLevel::Severe);
+			retry = false;
+		}
+		catch (websocketpp::lib::error_code e) {
+			Logger::write("websocketpp exception: " + e.message(), Logger::LogLevel::Severe);
+		}
+		catch (...) {
+			Logger::write("other exception.", Logger::LogLevel::Severe);
+			retry = false;
+		}
 	}
 
 	v8::V8::Dispose();
