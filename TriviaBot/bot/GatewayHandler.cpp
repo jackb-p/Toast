@@ -100,7 +100,7 @@ void GatewayHandler::on_hello(json decoded, client &c, websocketpp::connection_h
 	send_identify(c, hdl);
 }
 
-void GatewayHandler::on_dispatch(json decoded, client &c, websocketpp::connection_hdl &hdl) {
+void GatewayHandler::on_dispatch(json decoded, client &, websocketpp::connection_hdl &) {
 	last_seq = decoded["s"];
 	std::string event_name = decoded["t"];
 	json data = decoded["d"];
@@ -382,7 +382,6 @@ void GatewayHandler::on_event_guild_role_delete(json data) {
 	auto it = roles.find(role_id);
 
 	if (it != roles.end()) {
-		DiscordObjects::Role &role = roles[role_id];
 		DiscordObjects::Guild &guild = guilds[data["guild_id"]];
 
 		auto check_lambda = [role_id](const DiscordObjects::Role *r) {

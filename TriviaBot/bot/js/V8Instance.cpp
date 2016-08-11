@@ -504,13 +504,6 @@ Local<Object> V8Instance::wrap_role(DiscordObjects::Role *role) {
 }
 
 void V8Instance::js_get_role(Local<Name> property, const PropertyCallbackInfo<Value> &info) {
-	void *self_v = info.Data().As<External>()->Value();
-	if (!self_v) {
-		Logger::write("[v8] [js_get_role] Class pointer empty", Logger::LogLevel::Warning);
-		return;
-	}
-	V8Instance *self = static_cast<V8Instance *>(self_v);
-
 	void *role_v = info.Holder()->GetInternalField(0).As<External>()->Value();
 	if (!role_v) {
 		Logger::write("[v8] [js_get_role] Role pointer empty", Logger::LogLevel::Warning);

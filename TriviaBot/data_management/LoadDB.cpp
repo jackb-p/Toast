@@ -16,17 +16,8 @@
 / Hideous code, but only needs to be run one time.
 **/
 
-static int callback(void *x, int argc, char **argv, char **azColName) {
-	int i;
-	for (i = 0; i<argc; i++) {
-		std::cout << azColName[i] << " = " << (argv[i] ? argv[i] : "NULL") << std::endl;
-	}
-	return 0;
-}
-
 int load_questions() {
 	sqlite3 *db;
-	char *zErrMsg = 0;
 	int rc;
 
 	rc = sqlite3_open("bot/db/trivia.db", &db);

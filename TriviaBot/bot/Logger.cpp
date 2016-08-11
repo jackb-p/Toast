@@ -28,6 +28,8 @@ namespace Logger {
 		case LogLevel::Warning:
 			return std::cerr;
 		}
+
+		return std::cerr;
 	}
 
 	void write(std::string text, LogLevel log_level) {

@@ -105,7 +105,7 @@ TriviaGame::~TriviaGame() {
 
 	std::string update_sql;
 	if (data.size() < scores.size()) { // some users dont have entries yet
-		std::string sql = "INSERT INTO TotalScores (User, TotalScore, AverageTime) VALUES ";
+		sql = "INSERT INTO TotalScores (User, TotalScore, AverageTime) VALUES ";
 		for (auto &i : scores) {
 			if (data.find(i.first) == data.end()) {
 				sql += "(?, ?, ?),";
@@ -252,8 +252,8 @@ void TriviaGame::give_hint(int hints_given, std::string hint) {
 
 				// count number of *s
 				int length = 0;
-				for (unsigned int i = 0; i < word.length(); i++) {
-					if (word[i] == hide_char) {
+				for (unsigned int j = 0; j < word.length(); j++) {
+					if (word[j] == hide_char) {
 						length++;
 					}
 				}
