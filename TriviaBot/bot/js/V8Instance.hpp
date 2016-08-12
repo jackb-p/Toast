@@ -75,7 +75,7 @@ private:
 
 	/* print function */
 	static void js_print(const FunctionCallbackInfo<Value> &args);
-	
+
 	/* randomness functions */
 	static void js_random(const FunctionCallbackInfo<Value> &args);
 	static void js_shuffle(const FunctionCallbackInfo<Value> &args);

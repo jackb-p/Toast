@@ -1,6 +1,7 @@
 #ifndef BOT_JS_COMMANDHELPER
 #define BOT_JS_COMMANDHELPER
 
+#include <string>
 #include <vector>
 
 namespace CommandHelper {

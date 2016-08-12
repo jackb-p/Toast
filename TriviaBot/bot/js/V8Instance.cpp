@@ -48,12 +48,12 @@ void V8Instance::create() {
 void V8Instance::initialise(Local<Context> context) {
 	HandleScope handle_scope(isolate);
 
-	Local<Object> opts_obj = wrap_server(&(*guilds)[guild_id]);
-	
+	Local<Object> server_obj = wrap_server(&(*guilds)[guild_id]);
+
 	context->Global()->Set(
-		context, 
-		String::NewFromUtf8(isolate, "server", NewStringType::kNormal).ToLocalChecked(), 
-		opts_obj
+		context,
+		String::NewFromUtf8(isolate, "server", NewStringType::kNormal).ToLocalChecked(),
+		server_obj
 	).FromJust();
 
 	Logger::write("[v8] Bound server template", Logger::LogLevel::Debug);
@@ -64,7 +64,7 @@ v8::Local<v8::Context> V8Instance::create_context() {
 
 	Local<External> self = External::New(isolate, (void *) this);
 	global->Set(
-		String::NewFromUtf8(isolate, "print", NewStringType::kNormal).ToLocalChecked(), 
+		String::NewFromUtf8(isolate, "print", NewStringType::kNormal).ToLocalChecked(),
 		FunctionTemplate::New(isolate, V8Instance::js_print, self)
 	);
 	global->Set(
@@ -209,13 +209,6 @@ Local<Object> V8Instance::wrap_channel(DiscordObjects::Channel *channel) {
 }
 
 void V8Instance::js_get_channel(Local<Name> property, const PropertyCallbackInfo<Value> &info) {
-	void *self_v = info.Data().As<External>()->Value();
-	if (!self_v) {
-		Logger::write("[v8] [js_get_channel] Class pointer empty", Logger::LogLevel::Warning);
-		return;
-	}
-	V8Instance *self = static_cast<V8Instance *>(self_v);
-
 	void *channel_v = info.Holder()->GetInternalField(0).As<External>()->Value();
 	if (!channel_v) {
 		Logger::write("[v8] [js_get_channel] Channel pointer empty", Logger::LogLevel::Warning);
@@ -694,10 +687,10 @@ void V8Instance::exec_js(std::string js, DiscordObjects::Channel *channel, Disco
 		String::NewFromUtf8(isolate, "user", NewStringType::kNormal).ToLocalChecked(),
 		user_obj
 	);
-	Local<Object> channel_obj = wrap_user(sender);
+	Local<Object> channel_obj = wrap_channel(channel);
 	context->Global()->Set(
-		String::NewFromUtf8(isolate, "user", NewStringType::kNormal).ToLocalChecked(),
-		user_obj
+		String::NewFromUtf8(isolate, "channel", NewStringType::kNormal).ToLocalChecked(),
+		channel_obj
 	);
 	// TODO: 'message' object here too, although it's fairly pointless
 

@@ -1,5 +1,5 @@
 #include <curl/curl.h>
-#include <include/libplatform/libplatform.h>
+#include <include/libplatform/libplatform.>
 #include <include/v8.h>
 
 #include "ClientConnection.hpp"
