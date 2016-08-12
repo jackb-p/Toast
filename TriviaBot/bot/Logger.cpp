@@ -1,7 +1,6 @@
 #include "Logger.hpp"
 
 #include <iostream>
-#include <iomanip>
 #include <ctime>
 
 namespace Logger {
@@ -33,9 +32,16 @@ namespace Logger {
 	}
 
 	void write(std::string text, LogLevel log_level) {
-		auto t = std::time(nullptr);
-		auto tm = *std::localtime(&t);
+		time_t rawtime;
+		struct tm *timeinfo;
+	  char buffer[80];
 
-		get_ostream(log_level) << "[" << std::put_time(&tm, "%Y-%m-%d %H:%M:%S") << "] [" << log_level << "] " << text << std::endl;
+	  time(&rawtime);
+	  timeinfo = localtime(&rawtime);
+
+	  strftime(buffer, 80, "%Y-%m-%d %H:%M:%S", timeinfo);
+	  std::string time_str(buffer);
+
+		get_ostream(log_level) << "[" << time_str << "] [" << log_level << "] " << text << std::endl;
 	}
 }
