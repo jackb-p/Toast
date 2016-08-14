@@ -22,12 +22,9 @@ class V8Instance {
 public:
 	V8Instance(std::string guild_id, std::map<std::string, DiscordObjects::Guild> *guilds,
 		std::map<std::string, DiscordObjects::Channel> *channels, std::map<std::string, DiscordObjects::User> *users, std::map<std::string, DiscordObjects::Role> *roles);
-	~V8Instance();
-	void reload();
 	void exec_js(std::string js, DiscordObjects::Channel *channel, DiscordObjects::GuildMember *sender, std::string args = "");
 
 private:
-	void clean_up();
 	void create();
 	Local<Context> create_context();
 

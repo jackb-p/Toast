@@ -81,7 +81,7 @@ private:
 	void on_event_channel_delete(json data); // https://discordapp.com/developers/docs/topics/gateway#channel-delete
 
 	/* message events */
-	void on_event_message_create(json data); // https://discordapp.com/developers/docs/topics/gateway#message-create
+	void on_event_message_create(json data, client &c, websocketpp::connection_hdl &hdl); // https://discordapp.com/developers/docs/topics/gateway#message-create
 
 	const int protocol_version = 5;
 

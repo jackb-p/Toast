@@ -20,16 +20,11 @@ V8Instance::V8Instance(std::string guild_id, std::map<std::string, DiscordObject
 	create();
 }
 
-V8Instance::~V8Instance() {
-	clean_up();
-}
-
 void V8Instance::create() {
 	Isolate::CreateParams create_params;
 	create_params.array_buffer_allocator = ArrayBuffer::Allocator::NewDefaultAllocator();
 
 	isolate = Isolate::New(create_params);
-	isolate->Enter();
 	Logger::write("[v8] Created isolate", Logger::LogLevel::Debug);
 
 	Isolate::Scope isolate_scope(isolate);
@@ -659,18 +654,6 @@ void V8Instance::js_shuffle(const v8::FunctionCallbackInfo<v8::Value> &args) {
 
 		args.GetReturnValue().Set(return_arr);
 	}
-}
-
-
-void V8Instance::clean_up() {
-	Logger::write("[v8] Cleaning up", Logger::LogLevel::Debug);
-	isolate->Exit();
-	isolate->Dispose();
-}
-
-void V8Instance::reload() {
-	clean_up();
-	create();
 }
 
 void V8Instance::exec_js(std::string js, DiscordObjects::Channel *channel, DiscordObjects::GuildMember *sender, std::string args) {

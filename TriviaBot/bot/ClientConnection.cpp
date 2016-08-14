@@ -66,6 +66,8 @@ void ClientConnection::start(std::string uri) {
 	// Open the connection
 	c.connect(con);
 	c.run();
+
+	Logger::write("Finished running", Logger::LogLevel::Debug);
 }
 
 // Event handlers
@@ -120,4 +122,5 @@ void ClientConnection::on_message(websocketpp::connection_hdl hdl, message_ptr m
 
 void ClientConnection::on_close(websocketpp::connection_hdl) {
 	Logger::write("Connection closed", Logger::LogLevel::Info);
+	c.stop();
 }

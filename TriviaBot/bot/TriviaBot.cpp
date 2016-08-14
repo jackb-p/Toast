@@ -1,3 +1,6 @@
+#include <thread>
+#include <chrono>
+
 #include <curl/curl.h>
 #include <include/libplatform/libplatform.h>
 #include <include/v8.h>
@@ -31,21 +34,26 @@ int main(int argc, char *argv[]) {
 	std::string url = DiscordAPI::get_gateway().value("url", "wss://gateway.discord.gg");
 
 	bool retry = true;
+	int exit_code = 0;
 	while (retry) {
+		retry = false;
+
 		try {
 			ClientConnection conn;
 			conn.start(url + args);
 		}
 		catch (const std::exception &e) {
 			Logger::write("std exception: " + std::string(e.what()), Logger::LogLevel::Severe);
-			retry = false;
+			exit_code = 1;
 		}
 		catch (websocketpp::lib::error_code e) {
 			Logger::write("websocketpp exception: " + e.message(), Logger::LogLevel::Severe);
+			std::this_thread::sleep_for(std::chrono::seconds(10));
+			retry = true; // should just be an occasional connection issue
 		}
 		catch (...) {
 			Logger::write("other exception.", Logger::LogLevel::Severe);
-			retry = false;
+			exit_code = 2;
 		}
 	}
 
@@ -57,8 +65,5 @@ int main(int argc, char *argv[]) {
 
 	Logger::write("Cleaned up", Logger::LogLevel::Info);
 
-	std::cout << "Press enter to exit" << std::endl;
-	std::getchar();
-
-	return 0;
+	return exit_code;
 }

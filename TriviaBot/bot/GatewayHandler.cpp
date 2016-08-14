@@ -100,7 +100,7 @@ void GatewayHandler::on_hello(json decoded, client &c, websocketpp::connection_h
 	send_identify(c, hdl);
 }
 
-void GatewayHandler::on_dispatch(json decoded, client &, websocketpp::connection_hdl &) {
+void GatewayHandler::on_dispatch(json decoded, client &c, websocketpp::connection_hdl &hdl) {
 	last_seq = decoded["s"];
 	std::string event_name = decoded["t"];
 	json data = decoded["d"];
@@ -145,7 +145,7 @@ void GatewayHandler::on_dispatch(json decoded, client &, websocketpp::connection
 		on_event_channel_delete(data);
 	}
 	else if (event_name == "MESSAGE_CREATE") {
-		on_event_message_create(data);
+		on_event_message_create(data, c, hdl);
 	}
 	else if (event_name == "PRESENCE_UPDATE") {
 		on_event_presence_update(data);
@@ -306,7 +306,7 @@ void GatewayHandler::on_event_guild_member_update(json data) {
 	});
 	if (it != guild.members.end()) {
 		bool nick_changed = false;
-		size_t roles_change = 0;
+		int roles_change = 0;
 
 		DiscordObjects::GuildMember *member = (*it);
 
@@ -448,7 +448,7 @@ void GatewayHandler::on_event_channel_delete(json data) {
 	}
 }
 
-void GatewayHandler::on_event_message_create(json data) {
+void GatewayHandler::on_event_message_create(json data, client &c, websocketpp::connection_hdl &hdl) {
 	std::string message = data["content"];
 
 	DiscordObjects::Channel &channel = channels[data["channel_id"]];
@@ -481,8 +481,11 @@ void GatewayHandler::on_event_message_create(json data) {
 			else if (words[1] == "stop" || words[1] == "s") {
 				if (games.find(channel.id) != games.end()) {
 					delete_game(channel.id);
-					return;
 				}
+				else {
+					DiscordAPI::send_message(channel.id, ":warning: Couldn't find an ongoing trivia game for this channel.");
+				}
+				return;
 			}
 			else {
 				try {
@@ -502,14 +505,14 @@ void GatewayHandler::on_event_message_create(json data) {
 		games[channel.id]->start();
 	}
 	else if (words[0] == "`guilds") {
-		std::string m = "Guild List:\n";
+		std::string m = "**Guild List:**\n";
 		for (auto &gu : guilds) {
-			m += "> " + gu.second.name + " (" + gu.second.id + ") Channels: " + std::to_string(gu.second.channels.size()) + "\n";
+			m += ":small_orange_diamond: " + gu.second.name + " (" + gu.second.id + ") Channels: " + std::to_string(gu.second.channels.size()) + "\n";
 		}
 		DiscordAPI::send_message(channel.id, m);
 	}
 	else if (words[0] == "`info") {
-		DiscordAPI::send_message(channel.id, ":information_source: trivia-bot by Jack. <http://github.com/jackb-p/TriviaDiscord>");
+		DiscordAPI::send_message(channel.id, ":information_source: **trivia-bot** by Jack. <http://github.com/jackb-p/TriviaDiscord>");
 	}
 	else if (words[0] == "~js" && words.size() > 1) {
 		DiscordObjects::GuildMember *member = *std::find_if(guild.members.begin(), guild.members.end(), [sender](DiscordObjects::GuildMember *m) {
@@ -522,6 +525,16 @@ void GatewayHandler::on_event_message_create(json data) {
 		}
 	}
 	else if (words[0] == "~createjs" && words.size() > 1) {
+		auto &member = *std::find_if(guild.members.begin(), guild.members.end(), [sender](DiscordObjects::GuildMember *m) { return sender.id == m->user->id; });
+		bool allowed = std::find_if(member->roles.begin(), member->roles.end(), [](DiscordObjects::Role *r) { 
+			return r->name == "Admin" || r->name == "Moderator" || r->name == "Coder"; // TODO: customisation here
+		}) == member->roles.end(); // checks if the user has the required roles
+
+		if (!allowed) {
+			DiscordAPI::send_message(channel.id, ":warning: You do not have permission to use this command.");
+			return;
+		}
+
 		std::string args = message.substr(10);
 		size_t seperator_loc = args.find("|");
 		if (seperator_loc != std::string::npos) {
@@ -540,75 +553,76 @@ void GatewayHandler::on_event_message_create(json data) {
 	}
 	else if (words[0] == "`shutdown" && sender.id == "82232146579689472") { // it me
 		DiscordAPI::send_message(channel.id, ":zzz: Goodbye!");
-		// TODO: without needing c, hdl - c.close(hdl, websocketpp::close::status::going_away, "`shutdown command used.");
+		for (auto &game : games) {
+			delete_game(game.first);
+		}
+		v8_instances.clear();
+		c.close(hdl, websocketpp::close::status::going_away, "");
 	}
 	else if (words[0] == "`debug") {
 		if (words[1] == "channel" && words.size() == 3) {
 			auto it = channels.find(words[2]);
-			if (it != channels.end()) {
-				DiscordAPI::send_message(channel.id, it->second.to_debug_string());
-			}
-			else {
+			if (it == channels.end()) {
 				DiscordAPI::send_message(channel.id, ":question: Unrecognised channel.");
+				return;
 			}
+
+			DiscordAPI::send_message(channel.id, it->second.to_debug_string());
 		}
 		else if (words[1] == "guild" && words.size() == 3) {
 			auto it = guilds.find(words[2]);
-			if (it != guilds.end()) {
-				DiscordAPI::send_message(channel.id, it->second.to_debug_string());
-			}
-			else {
+			if (it == guilds.end()) {
 				DiscordAPI::send_message(channel.id, ":question: Unrecognised guild.");
+				return;
 			}
+
+			DiscordAPI::send_message(channel.id, it->second.to_debug_string());
 		}
 		else if (words[1] == "member" && words.size() == 4) {
 			auto it = guilds.find(words[2]);
-			if (it != guilds.end()) {
-				std::string user_id = words[3];
-
-				auto it2 = std::find_if(it->second.members.begin(), it->second.members.end(), [user_id](DiscordObjects::GuildMember *member) {
-					return user_id == member->user->id;
-				});
-				if (it2 != it->second.members.end()) {
-					DiscordAPI::send_message(channel.id, (*it2)->to_debug_string());
-				}
-				else {
-					DiscordAPI::send_message(channel.id, ":question: Unrecognised user.");
-				}
-			}
-			else {
+			if (it == guilds.end()) {
 				DiscordAPI::send_message(channel.id, ":question: Unrecognised guild.");
+				return;
 			}
+
+			std::string user_id = words[3];
+			auto it2 = std::find_if(it->second.members.begin(), it->second.members.end(), [user_id](DiscordObjects::GuildMember *member) {
+				return user_id == member->user->id;
+			});
+			if (it2 == it->second.members.end()) {
+				DiscordAPI::send_message(channel.id, ":question: Unrecognised user.");
+				return;
+			}
+
+			DiscordAPI::send_message(channel.id, (*it2)->to_debug_string());
 		}
 		else if (words[1] == "role" && words.size() == 3) {
 			auto it = roles.find(words[2]);
-			if (it != roles.end()) {
-				DiscordAPI::send_message(channel.id, it->second.to_debug_string());
-			}
-			else {
+			if (it == roles.end()) {
 				DiscordAPI::send_message(channel.id, ":question: Unrecognised role.");
+				return;
 			}
+
+			DiscordAPI::send_message(channel.id, it->second.to_debug_string());
 		}
 		else if (words[1] == "role" && words.size() == 4) {
 			std::string role_name = words[3];
 
 			auto it = guilds.find(words[2]);
-			if (it != guilds.end()) {
-				auto check_lambda = [role_name](DiscordObjects::Role *r) {
-					return role_name == r->name;
-				};
-
-				auto it2 = std::find_if(it->second.roles.begin(), it->second.roles.end(), check_lambda);
-				if (it2 != it->second.roles.end()) {
-					DiscordAPI::send_message(channel.id, (*it2)->to_debug_string());
-				}
-				else {
-					DiscordAPI::send_message(channel.id, ":question: Unrecognised role.");
-				}
-			}
-			else {
+			if (it == guilds.end()) {
 				DiscordAPI::send_message(channel.id, ":question: Unrecognised guild.");
+				return;
 			}
+
+			auto it2 = std::find_if(it->second.roles.begin(), it->second.roles.end(), [role_name](DiscordObjects::Role *r) {
+				return role_name == r->name;
+			});
+			if (it2 == it->second.roles.end()) {
+				DiscordAPI::send_message(channel.id, ":question: Unrecognised role.");
+				return;
+			}
+			
+			DiscordAPI::send_message(channel.id, (*it2)->to_debug_string());
 		}
 		else {
 			DiscordAPI::send_message(channel.id, ":question: Unknown parameters.");
@@ -620,15 +634,23 @@ void GatewayHandler::on_event_message_create(json data) {
 			args = message.substr(words[0].length() + 1);
 		}
 
-		auto it = v8_instances.find(channel.guild_id);
-		if (it != v8_instances.end() && custom_command.script.length() > 0) {
-			DiscordObjects::GuildMember *member = *std::find_if(guild.members.begin(), guild.members.end(), [sender](DiscordObjects::GuildMember *m) {
-				return sender.id == m->user->id;
-			});
-			it->second->exec_js(custom_command.script, &channel, member, args);
+		if (custom_command.script.length() == 0) {
+			DiscordAPI::send_message(channel.id, ":warning: Script has 0 length.");
+			return;
 		}
+
+		auto it = v8_instances.find(channel.guild_id);
+		if (it == v8_instances.end()) {
+			DiscordAPI::send_message(channel.id, ":warning: No V8 instance exists for this server - it's our fault not yours!");
+			return;
+		}
+
+		DiscordObjects::GuildMember *member = *std::find_if(guild.members.begin(), guild.members.end(), [sender](DiscordObjects::GuildMember *m) {
+			return sender.id == m->user->id;
+		});
+		it->second->exec_js(custom_command.script, &channel, member, args);
 	}
-	else if (games.find(channel.id) != games.end()) { // message received in channel with ongoing game
+	else if (games.find(channel.id) != games.end()) { // message received in channel with ongoing trivia game
 		games[channel.id]->handle_answer(message, sender);
 	}
 }

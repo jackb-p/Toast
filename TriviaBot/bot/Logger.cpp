@@ -34,13 +34,13 @@ namespace Logger {
 	void write(std::string text, LogLevel log_level) {
 		time_t rawtime;
 		struct tm *timeinfo;
-	  char buffer[80];
+		char buffer[80];
 
-	  time(&rawtime);
-	  timeinfo = localtime(&rawtime);
+		time(&rawtime);
+		timeinfo = localtime(&rawtime);
 
-	  strftime(buffer, 80, "%Y-%m-%d %H:%M:%S", timeinfo);
-	  std::string time_str(buffer);
+		strftime(buffer, 80, "%Y-%m-%d %H:%M:%S", timeinfo);
+		std::string time_str(buffer);
 
 		get_ostream(log_level) << "[" << time_str << "] [" << log_level << "] " << text << std::endl;
 	}
