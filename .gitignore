@@ -15,3 +15,9 @@ config.json
 
 # Compiled sqlite file
 sqlite3.obj
+
+# V8 lib
+lib/v8
+
+# Built files
+build/

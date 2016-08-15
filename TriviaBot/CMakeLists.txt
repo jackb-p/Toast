@@ -52,3 +52,5 @@ include_directories(
 
 # don't know if necessary, too scared to remove
 add_definitions(-D_WEBSOCKETPP_CPP11_STL_)
+
+set(CMAKE_BUILD_TYPE Release)

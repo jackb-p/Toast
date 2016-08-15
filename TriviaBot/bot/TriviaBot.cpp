@@ -62,6 +62,5 @@ int main(int argc, char *argv[]) {
 
 	Logger::write("Cleaned up", Logger::LogLevel::Info);
 
-	std::getchar();
 	return exit_code;
 }

@@ -14,7 +14,7 @@ namespace CommandHelper {
 		sqlite3 *db; int return_code;
 		return_code = sqlite3_open("bot/db/trivia.db", &db);
 
-		std::string sql = "SELECT * FROM CustomJS";
+		std::string sql = "SELECT GuildID, CommandName, Script FROM CustomJS";
 
 		sqlite3_stmt *stmt;
 		return_code = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, 0);

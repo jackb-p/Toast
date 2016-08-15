@@ -15,7 +15,7 @@
 #include "Logger.hpp"
 #include "BotConfig.hpp"
 
-TriviaGame::TriviaGame(BotConfig &c, GatewayHandler *gh, std::string channel_id, int total_questions, int delay) : interval(delay), config(c) {
+TriviaGame::TriviaGame(BotConfig &c, GatewayHandler *gh, std::string channel_id, int total_questions, int delay) : config(c), interval(delay) {
 	this->gh = gh;
 	this->channel_id = channel_id;
 
