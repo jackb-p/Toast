@@ -6,9 +6,12 @@
 #include "V8Instance.hpp"
 #include "../DiscordAPI.hpp"
 #include "../Logger.hpp"
+#include "../BotConfig.hpp"
 
-V8Instance::V8Instance(std::string guild_id, std::map<std::string, DiscordObjects::Guild> *guilds, std::map<std::string, DiscordObjects::Channel> *channels,
-	std::map<std::string, DiscordObjects::User> *users, std::map<std::string, DiscordObjects::Role> *roles) {
+using namespace v8;
+
+V8Instance::V8Instance(BotConfig &c, std::string guild_id, std::map<std::string, DiscordObjects::Guild> *guilds, std::map<std::string, DiscordObjects::Channel> *channels,
+	std::map<std::string, DiscordObjects::User> *users, std::map<std::string, DiscordObjects::Role> *roles) : config(c) {
 
 	rng = std::mt19937(std::random_device()());
 	this->guild_id = guild_id;
@@ -25,6 +28,7 @@ void V8Instance::create() {
 	create_params.array_buffer_allocator = ArrayBuffer::Allocator::NewDefaultAllocator();
 
 	isolate = Isolate::New(create_params);
+	isolate->Enter();
 	Logger::write("[v8] Created isolate", Logger::LogLevel::Debug);
 
 	Isolate::Scope isolate_scope(isolate);
@@ -696,7 +700,7 @@ void V8Instance::exec_js(std::string js, DiscordObjects::Channel *channel, Disco
 
 		std::string err_msg = *error;
 		Logger::write("[v8] Compilation error: " + err_msg, Logger::LogLevel::Debug);
-		DiscordAPI::send_message(channel->id, ":warning: **Compilation error:** `" + err_msg + "`");
+		DiscordAPI::send_message(channel->id, ":warning: **Compilation error:** `" + err_msg + "`", config.token, config.cert_location);
 
 		return;
 	}
@@ -708,7 +712,7 @@ void V8Instance::exec_js(std::string js, DiscordObjects::Channel *channel, Disco
 
 		std::string err_msg = *error;
 		Logger::write("[v8] Runtime error: " + err_msg, Logger::LogLevel::Debug);
-		DiscordAPI::send_message(channel->id, ":warning: **Runtime error:** `" + err_msg + "`");
+		DiscordAPI::send_message(channel->id, ":warning: **Runtime error:** `" + err_msg + "`", config.token, config.cert_location);
 	}
 
 	auto end = std::chrono::steady_clock::now();
@@ -719,7 +723,7 @@ void V8Instance::exec_js(std::string js, DiscordObjects::Channel *channel, Disco
 	current_channel = nullptr;
 
 	if (print_text != "") {
-		DiscordAPI::send_message(channel->id, print_text);
+		DiscordAPI::send_message(channel->id, print_text, config.token, config.cert_location);
 		print_text = "";
 	}
 }

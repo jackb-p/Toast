@@ -14,68 +14,68 @@
 #include "../data_structures/GuildMember.hpp"
 #include "../data_structures/User.hpp"
 
-class APIHelper;
-
-using namespace v8;
+class BotConfig;
 
 class V8Instance {
 public:
-	V8Instance(std::string guild_id, std::map<std::string, DiscordObjects::Guild> *guilds,
+	V8Instance(BotConfig &c, std::string guild_id, std::map<std::string, DiscordObjects::Guild> *guilds,
 		std::map<std::string, DiscordObjects::Channel> *channels, std::map<std::string, DiscordObjects::User> *users, std::map<std::string, DiscordObjects::Role> *roles);
 	void exec_js(std::string js, DiscordObjects::Channel *channel, DiscordObjects::GuildMember *sender, std::string args = "");
 
 private:
-	void create();
-	Local<Context> create_context();
+	BotConfig &config;
 
-	void initialise(Local<Context> context);
+	void create();
+	v8::Local<v8::Context> create_context();
+
+	void initialise(v8::Local<v8::Context> context);
 
 	/* server */
-	Global<ObjectTemplate> server_template;
-	Local<ObjectTemplate> make_server_template();
-	Local<Object> wrap_server(DiscordObjects::Guild *guild);
-	static void js_get_server(Local<Name> property, const PropertyCallbackInfo<Value> &info);
+	v8::Global<v8::ObjectTemplate> server_template;
+	v8::Local<v8::ObjectTemplate> make_server_template();
+	v8::Local<v8::Object> wrap_server(DiscordObjects::Guild *guild);
+	static void js_get_server(v8::Local<v8::Name> property, const v8::PropertyCallbackInfo<v8::Value> &info);
 
 
 	/* user */
-	Global<ObjectTemplate> user_template;
-	Local<ObjectTemplate> make_user_template();
-	Local<Object> wrap_user(DiscordObjects::GuildMember *member);
-	static void js_get_user(Local<Name> property, const PropertyCallbackInfo<Value> &info);
+	v8::Global<v8::ObjectTemplate> user_template;
+	v8::Local<v8::ObjectTemplate> make_user_template();
+	v8::Local<v8::Object> wrap_user(DiscordObjects::GuildMember *member);
+	static void js_get_user(v8::Local<v8::Name> property, const v8::PropertyCallbackInfo<v8::Value> &info);
 
-	Global<ObjectTemplate> user_list_template;
-	Local<ObjectTemplate> make_user_list_template();
-	Local<Object> wrap_user_list(std::vector<DiscordObjects::GuildMember *> *user_list);
-	static void js_get_user_list(uint32_t index, const PropertyCallbackInfo<Value> &info);
+	v8::Global<v8::ObjectTemplate> user_list_template;
+	v8::Local<v8::ObjectTemplate> make_user_list_template();
+	v8::Local<v8::Object> wrap_user_list(std::vector<DiscordObjects::GuildMember *> *user_list);
+	static void js_get_user_list(uint32_t index, const v8::PropertyCallbackInfo<v8::Value> &info);
 
 	/* channel */
-	Global<ObjectTemplate> channel_template;
-	Local<ObjectTemplate> make_channel_template();
-	Local<Object> wrap_channel(DiscordObjects::Channel *channel);
-	static void js_get_channel(Local<Name> property, const PropertyCallbackInfo<Value> &info);
+	v8::Global<v8::ObjectTemplate> channel_template;
+	v8::Local<v8::ObjectTemplate> make_channel_template();
+	v8::Local<v8::Object> wrap_channel(DiscordObjects::Channel *channel);
+	static void js_get_channel(v8::Local<v8::Name> property, const v8::PropertyCallbackInfo<v8::Value> &info);
 
-	Global<ObjectTemplate> channel_list_template;
-	Local<ObjectTemplate> make_channel_list_template();
-	Local<Object> wrap_channel_list(std::vector<DiscordObjects::Channel *> *channel_list);
-	static void js_get_channel_list(uint32_t index, const PropertyCallbackInfo<Value> &info);
+	v8::Global<v8::ObjectTemplate> channel_list_template;
+	v8::Local<v8::ObjectTemplate> make_channel_list_template();
+	v8::Local<v8::Object> wrap_channel_list(std::vector<DiscordObjects::Channel *> *channel_list);
+	static void js_get_channel_list(uint32_t index, const v8::PropertyCallbackInfo<v8::Value> &info);
 
 	/* role */
-	Global<ObjectTemplate> role_template;
-	Local<ObjectTemplate> make_role_template();
-	Local<Object> wrap_role(DiscordObjects::Role *role);
-	static void js_get_role(Local<Name> property, const PropertyCallbackInfo<Value> &info);
+	v8::Global<v8::ObjectTemplate> role_template;
+	v8::Local<v8::ObjectTemplate> make_role_template();
+	v8::Local<v8::Object> wrap_role(DiscordObjects::Role *role);
+	static void js_get_role(v8::Local<v8::Name> property, const v8::PropertyCallbackInfo<v8::Value> &info);
 
-	Global<ObjectTemplate> role_list_template;
-	Local<ObjectTemplate> make_role_list_template();
-	Local<Object> wrap_role_list(std::vector<DiscordObjects::Role *> *role_list);
-	static void js_get_role_list(uint32_t index, const PropertyCallbackInfo<Value> &info);
+	v8::Global<v8::ObjectTemplate> role_list_template;
+	v8::Local<v8::ObjectTemplate> make_role_list_template();
+	v8::Local<v8::Object> wrap_role_list(std::vector<DiscordObjects::Role *> *role_list);
+	static void js_get_role_list(uint32_t index, const v8::PropertyCallbackInfo<v8::Value> &info);
 
 	/* print function */
-	static void js_print(const FunctionCallbackInfo<Value> &args);
+	static void js_print(const v8::FunctionCallbackInfo<v8::Value> &args);
 
 	/* randomness functions */
-	static void js_random(const FunctionCallbackInfo<Value> &args);
-	static void js_shuffle(const FunctionCallbackInfo<Value> &args);
+	static void js_random(const v8::FunctionCallbackInfo<v8::Value> &args);
+	static void js_shuffle(const v8::FunctionCallbackInfo<v8::Value> &args);
 
 	std::map<std::string, DiscordObjects::Guild> *guilds;
 	std::map<std::string, DiscordObjects::Channel> *channels;
@@ -83,9 +83,9 @@ private:
 	std::map<std::string, DiscordObjects::Role> *roles;
 
 	std::string guild_id;
-	Isolate *isolate;
+	v8::Isolate *isolate;
 
-	Global<Context> context_;
+	v8::Global<v8::Context> context_;
 
 	/* random generating variables */
 	std::mt19937 rng;

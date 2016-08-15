@@ -4,7 +4,7 @@
 #include <thread>
 #include <chrono>
 
-#include "http/HTTPHelper.hpp"
+#include "http/HTTP.hpp"
 #include "Logger.hpp"
 
 using namespace std::chrono_literals;
@@ -16,7 +16,7 @@ namespace DiscordAPI {
 
 	const std::string json_mime_type = "application/json";
 
-	void send_message(std::string channel_id, std::string message) {
+	void send_message(std::string channel_id, std::string message, std::string token, std::string ca_location) {
 		if (message == "") {
 			Logger::write("[API] [send_message] Tried to send empty message", Logger::LogLevel::Warning);
 			return;
@@ -31,9 +31,9 @@ namespace DiscordAPI {
 
 			std::string first = message.substr(0, 2000);
 			std::string second = message.substr(2000);
-			send_message(channel_id, first);
+			send_message(channel_id, first, token, ca_location);
 			std::this_thread::sleep_for(50ms);
-			send_message(channel_id, second);
+			send_message(channel_id, second, token, ca_location);
 			return;
 		}
 
@@ -44,14 +44,14 @@ namespace DiscordAPI {
 
 		std::string response;
 		long response_code = 0;
-		response = HTTP::post_request(url, json_mime_type, data.dump(), &response_code);
+		response = HTTP::post_request(url, json_mime_type, data.dump(), &response_code, token, ca_location);
 
 		int retries = 0;
 		while (response_code != 200 && retries < 2) {
 			Logger::write("[API] [send_message] Got non-200 response code, retrying", Logger::LogLevel::Warning);
 			std::this_thread::sleep_for(100ms);
 			// try 3 times. usually enough to prevent 502 bad gateway issues
-			response = HTTP::post_request(url, json_mime_type, data.dump(), &response_code);
+			response = HTTP::post_request(url, json_mime_type, data.dump(), &response_code, token, ca_location);
 			retries++;
 		}
 
@@ -60,17 +60,17 @@ namespace DiscordAPI {
 		}
 	}
 
-	json get_gateway() {
+	json get_gateway(std::string ca_location) {
 		std::string response;
 		long response_code;
-		response = HTTP::get_request(gateway_url, &response_code);
+		response = HTTP::get_request(gateway_url, &response_code, "", ca_location);
 
 		int retries = 0;
 		while (response_code != 200 && retries < 4) {
 			Logger::write("[API] [get_gateway] Got non-200 response code, retrying", Logger::LogLevel::Warning);
 			std::this_thread::sleep_for(100ms);
 			// try 3 times. usually enough to prevent 502 bad gateway issues
-			response = HTTP::get_request(gateway_url, &response_code);
+			response = HTTP::get_request(gateway_url, &response_code, "", ca_location);
 			retries++;
 		}
 

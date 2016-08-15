@@ -7,11 +7,11 @@
 
 using json = nlohmann::json;
 
-class HTTPHelper;
+class BotConfig;
 
 namespace DiscordAPI {
-	json get_gateway();
-	void send_message(std::string channel_id, std::string message);
+	json get_gateway(std::string ca_location);
+	void send_message(std::string channel_id, std::string message, std::string token, std::string ca_location);
 }
 
 #endif

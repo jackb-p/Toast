@@ -13,8 +13,9 @@
 #include "DiscordAPI.hpp"
 #include "data_structures/User.hpp"
 #include "Logger.hpp"
+#include "BotConfig.hpp"
 
-TriviaGame::TriviaGame(GatewayHandler *gh, std::string channel_id, int total_questions, int delay) : interval(delay) {
+TriviaGame::TriviaGame(BotConfig &c, GatewayHandler *gh, std::string channel_id, int total_questions, int delay) : interval(delay), config(c) {
 	this->gh = gh;
 	this->channel_id = channel_id;
 
@@ -26,7 +27,7 @@ TriviaGame::~TriviaGame() {
 	current_thread.reset();
 
 	if (scores.size() == 0) {
-		DiscordAPI::send_message(channel_id, ":red_circle: Game cancelled!");
+		DiscordAPI::send_message(channel_id, ":red_circle: Game cancelled!", config.token, config.cert_location);
 		return;
 	}
 
@@ -50,7 +51,7 @@ TriviaGame::~TriviaGame() {
 		average_time.pop_back(); average_time.pop_back(); average_time.pop_back();
 		message += ":small_blue_diamond: <@!" + p.first + ">: " + std::to_string(p.second) + " (Avg: " + average_time + " seconds)\n";
 	}
-	DiscordAPI::send_message(channel_id, message);
+	DiscordAPI::send_message(channel_id, message, config.token, config.cert_location);
 
 	sqlite3 *db; int rc; std::string sql;
 
@@ -213,7 +214,8 @@ void TriviaGame::question() {
 		sqlite3_close(db);
 
 		questions_asked++;
-		DiscordAPI::send_message(channel_id, ":question: **(" + std::to_string(questions_asked) + "/" + std::to_string(total_questions) + ")** " + current_question);
+		DiscordAPI::send_message(channel_id, ":question: **(" + std::to_string(questions_asked) + "/" + std::to_string(total_questions) + ")** " + current_question,
+			config.token, config.cert_location);
 		question_start = boost::posix_time::microsec_clock::universal_time();
 
 		give_hint(0, "");
@@ -280,11 +282,11 @@ void TriviaGame::give_hint(int hints_given, std::string hint) {
 		hints_given++; // now equal to the amount of [hide_char]s that need to be present in each word
 	
 		if (print) {
-			DiscordAPI::send_message(channel_id, ":small_orange_diamond: Hint: **`" + hint + "`**");
+			DiscordAPI::send_message(channel_id, ":small_orange_diamond: Hint: **`" + hint + "`**", config.token, config.cert_location);
 		}
 	}
 	boost::this_thread::sleep(interval);
-	DiscordAPI::send_message(channel_id, ":exclamation: Question failed. Answer: ** `" + *current_answers.begin() + "` **");
+	DiscordAPI::send_message(channel_id, ":exclamation: Question failed. Answer: ** `" + *current_answers.begin() + "` **", config.token, config.cert_location);
 }
 
 void TriviaGame::handle_answer(std::string answer, DiscordObjects::User sender) {
@@ -299,7 +301,7 @@ void TriviaGame::handle_answer(std::string answer, DiscordObjects::User sender) 
 		// remove the last three 0s
 		time_taken.pop_back(); time_taken.pop_back(); time_taken.pop_back();
 
-		DiscordAPI::send_message(channel_id, ":heavy_check_mark: <@!" + sender.id + "> You got it! (" + time_taken + " seconds)");
+		DiscordAPI::send_message(channel_id, ":heavy_check_mark: <@!" + sender.id + "> You got it! (" + time_taken + " seconds)", config.token, config.cert_location);
 
 		increase_score(sender.id);
 		update_average_time(sender.id, diff.total_milliseconds());

@@ -1,20 +1,18 @@
-#include "HTTPHelper.hpp"
+#include "HTTP.hpp"
 
 #include "../Logger.hpp"
-
-extern std::string bot_token;
+#include "../BotConfig.hpp"
 
 /*
 *  Warning: (Awful) C Code
 */
-
 namespace HTTP {
 	size_t write_callback(void *contents, size_t size, size_t nmemb, void *read_buffer) {
 		static_cast<std::string *>(read_buffer)->append(static_cast<char *>(contents), size * nmemb);
 		return size * nmemb;
 	}
 
-	std::string post_request(std::string url, std::string content_type, std::string data, long *response_code) {
+	std::string post_request(std::string url, std::string content_type, std::string data, long *response_code, std::string token, std::string ca_location) {
 		CURL *curl;
 		CURLcode res;
 		std::string read_buffer;
@@ -25,11 +23,11 @@ namespace HTTP {
 			curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 
 			// Now with real HTTPS!
-			curl_easy_setopt(curl, CURLOPT_CAINFO, "bot/http/DiscordCA.crt");
+			curl_easy_setopt(curl, CURLOPT_CAINFO, ca_location.c_str());
 
 			std::string header_arr[3];
 			header_arr[0] = "Content-Type: " + content_type;
-			header_arr[1] = "Authorization: Bot " + bot_token;
+			header_arr[1] = "Authorization: Bot " + token;
 			header_arr[2] = "User-Agent: DiscordBot(http://github.com/jackb-p/triviadiscord, 1.0)";
 
 			for (std::string h : header_arr) {
@@ -59,7 +57,7 @@ namespace HTTP {
 		return read_buffer;
 	}
 
-	std::string get_request(std::string url, long *response_code) {
+	std::string get_request(std::string url, long *response_code, std::string token, std::string ca_location) {
 		CURL *curl;
 		CURLcode res;
 		std::string read_buffer;
@@ -70,10 +68,10 @@ namespace HTTP {
 			curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 
 			// Now with real HTTPS!
-			curl_easy_setopt(curl, CURLOPT_CAINFO, "bot/http/DiscordCA.crt");
+			curl_easy_setopt(curl, CURLOPT_CAINFO, ca_location.c_str());
 
 			std::string header_arr[2];
-			header_arr[0] = "Authorization: Bot " + bot_token;
+			header_arr[0] = "Authorization: Bot " + token;
 			header_arr[1] = "User-Agent: DiscordBot (http://github.com/jackb-p/triviadiscord, 1.0)";
 
 			for (std::string h : header_arr) {

@@ -3,60 +3,58 @@
 #include <cstdio>
 #include <iostream>
 
-#include "GatewayHandler.hpp"
 #include "Logger.hpp"
+#include "BotConfig.hpp"
 
-ClientConnection::ClientConnection() {
+ClientConnection::ClientConnection(BotConfig &c) : config(c), gh(config) {
 	// Reset the log channels
-	c.clear_access_channels(websocketpp::log::alevel::all);
+	cli.clear_access_channels(websocketpp::log::alevel::all);
 
 	// Only want application logging, logging from the initial connection stages or any error logging
-	c.set_access_channels(websocketpp::log::alevel::app | websocketpp::log::alevel::connect);
-	c.set_error_channels(websocketpp::log::elevel::all);
+	cli.set_access_channels(websocketpp::log::alevel::app | websocketpp::log::alevel::connect);
+	cli.set_error_channels(websocketpp::log::elevel::all);
 
 	// Initialize ASIO
-	c.init_asio();
+	cli.init_asio();
 
 	// Bind handlers
-	c.set_socket_init_handler(bind(
+	cli.set_socket_init_handler(bind(
 		&ClientConnection::on_socket_init,
 		this,
 		websocketpp::lib::placeholders::_1
 	));
-	c.set_tls_init_handler(bind<context_ptr>(
+	cli.set_tls_init_handler(bind<context_ptr>(
 		&ClientConnection::on_tls_init,
 		this,
 		websocketpp::lib::placeholders::_1
 		));
-	c.set_message_handler(bind(
+	cli.set_message_handler(bind(
 		&ClientConnection::on_message,
 		this,
 		websocketpp::lib::placeholders::_1,
 		websocketpp::lib::placeholders::_2
 	));
-	c.set_open_handler(bind(
+	cli.set_open_handler(bind(
 		&ClientConnection::on_open,
 		this,
 		websocketpp::lib::placeholders::_1
 	));
-	c.set_close_handler(bind(
+	cli.set_close_handler(bind(
 		&ClientConnection::on_close,
 		this,
 		websocketpp::lib::placeholders::_1
 	));
-	c.set_fail_handler(bind(
+	cli.set_fail_handler(bind(
 		&ClientConnection::on_fail,
 		this,
 		websocketpp::lib::placeholders::_1
 	));
-
-	gh = std::make_unique<GatewayHandler>();
 }
 
 // Open a connection to the URI provided
 void ClientConnection::start(std::string uri) {
 	websocketpp::lib::error_code ec;
-	client::connection_ptr con = c.get_connection(uri, ec);
+	client::connection_ptr con = cli.get_connection(uri, ec);
 
 	if (ec) { // failed to create connection
 		Logger::write("Failed to create connection: " + ec.message(), Logger::LogLevel::Severe);
@@ -64,8 +62,8 @@ void ClientConnection::start(std::string uri) {
 	}
 
 	// Open the connection
-	c.connect(con);
-	c.run();
+	cli.connect(con);
+	cli.run();
 
 	Logger::write("Finished running", Logger::LogLevel::Debug);
 }
@@ -91,7 +89,7 @@ context_ptr ClientConnection::on_tls_init(websocketpp::connection_hdl) {
 }
 
 void ClientConnection::on_fail(websocketpp::connection_hdl hdl) {
-	client::connection_ptr con = c.get_con_from_hdl(hdl);
+	client::connection_ptr con = cli.get_con_from_hdl(hdl);
 
 	// Print as much information as possible
 	Logger::write("Fail handler: \n" +
@@ -117,10 +115,10 @@ void ClientConnection::on_message(websocketpp::connection_hdl hdl, message_ptr m
 
 
 	// Pass the message to the gateway handler
-	gh->handle_data(message->get_payload(), c, hdl);
+	gh.handle_data(message->get_payload(), cli, hdl);
 }
 
 void ClientConnection::on_close(websocketpp::connection_hdl) {
 	Logger::write("Connection closed", Logger::LogLevel::Info);
-	c.stop();
+	cli.stop();
 }

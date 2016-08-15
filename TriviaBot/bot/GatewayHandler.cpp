@@ -5,10 +5,9 @@
 #include "DiscordAPI.hpp"
 #include "Logger.hpp"
 #include "data_structures/GuildMember.hpp"
+#include "BotConfig.hpp"
 
-extern std::string bot_token;
-
-GatewayHandler::GatewayHandler() {
+GatewayHandler::GatewayHandler(BotConfig &c) : config(c) {
 	last_seq = 0;
 
 	CommandHelper::init();
@@ -59,7 +58,7 @@ void GatewayHandler::send_identify(client &c, websocketpp::connection_hdl &hdl) 
 	json identify = {
 		{ "op", 2 },
 		{ "d", {
-			{ "token", bot_token },
+			{ "token", config.token },
 			{ "properties",{
 				{ "$browser", "Microsoft Windows 10" },
 				{ "$device", "TriviaBot-0.0" },
@@ -239,7 +238,7 @@ void GatewayHandler::on_event_guild_create(json data) {
 	}
 
 	if (v8_instances.count(guild.id) == 0) {
-		v8_instances[guild.id] = std::make_unique<V8Instance>(guild.id, &guilds, &channels, &users, &roles);
+		v8_instances[guild.id] = std::make_unique<V8Instance>(config, guild.id, &guilds, &channels, &users, &roles);
 		Logger::write("Created v8 instance for guild " + guild.id, Logger::LogLevel::Debug);
 	}
 
@@ -465,7 +464,7 @@ void GatewayHandler::on_event_message_create(json data, client &c, websocketpp::
 		int delay = 8;
 
 		if (words.size() > 3) {
-			DiscordAPI::send_message(channel.id, ":exclamation: Invalid arguments!");
+			DiscordAPI::send_message(channel.id, ":exclamation: Invalid arguments!", config.token, config.cert_location);
 			return;
 		}
 		else  if (words.size() > 1) {
@@ -475,7 +474,7 @@ void GatewayHandler::on_event_message_create(json data, client &c, websocketpp::
 				help += "\\`trivia **stop**: stops the ongoing game.\n";
 				help += "\\`trivia **help**: prints this message\n";
 
-				DiscordAPI::send_message(channel.id, help);
+				DiscordAPI::send_message(channel.id, help, config.token, config.cert_location);
 				return;
 			}
 			else if (words[1] == "stop" || words[1] == "s") {
@@ -483,7 +482,7 @@ void GatewayHandler::on_event_message_create(json data, client &c, websocketpp::
 					delete_game(channel.id);
 				}
 				else {
-					DiscordAPI::send_message(channel.id, ":warning: Couldn't find an ongoing trivia game for this channel.");
+					DiscordAPI::send_message(channel.id, ":warning: Couldn't find an ongoing trivia game for this channel.", config.token, config.cert_location);
 				}
 				return;
 			}
@@ -495,13 +494,13 @@ void GatewayHandler::on_event_message_create(json data, client &c, websocketpp::
 					}
 				}
 				catch (std::invalid_argument e) {
-					DiscordAPI::send_message(channel.id, ":exclamation: Invalid arguments!");
+					DiscordAPI::send_message(channel.id, ":exclamation: Invalid arguments!", config.token, config.cert_location);
 					return;
 				}
 			}
 		}
 
-		games[channel.id] = std::make_unique<TriviaGame>(this, channel.id, questions, delay);
+		games[channel.id] = std::make_unique<TriviaGame>(config, this, channel.id, questions, delay);
 		games[channel.id]->start();
 	}
 	else if (words[0] == "`guilds") {
@@ -509,10 +508,10 @@ void GatewayHandler::on_event_message_create(json data, client &c, websocketpp::
 		for (auto &gu : guilds) {
 			m += ":small_orange_diamond: " + gu.second.name + " (" + gu.second.id + ") Channels: " + std::to_string(gu.second.channels.size()) + "\n";
 		}
-		DiscordAPI::send_message(channel.id, m);
+		DiscordAPI::send_message(channel.id, m, config.token, config.cert_location);
 	}
 	else if (words[0] == "`info") {
-		DiscordAPI::send_message(channel.id, ":information_source: **trivia-bot** by Jack. <http://github.com/jackb-p/TriviaDiscord>");
+		DiscordAPI::send_message(channel.id, ":information_source: **trivia-bot** by Jack. <http://github.com/jackb-p/TriviaDiscord>", config.token, config.cert_location);
 	}
 	else if (words[0] == "~js" && words.size() > 1) {
 		DiscordObjects::GuildMember *member = *std::find_if(guild.members.begin(), guild.members.end(), [sender](DiscordObjects::GuildMember *m) {
@@ -526,12 +525,13 @@ void GatewayHandler::on_event_message_create(json data, client &c, websocketpp::
 	}
 	else if (words[0] == "~createjs" && words.size() > 1) {
 		auto &member = *std::find_if(guild.members.begin(), guild.members.end(), [sender](DiscordObjects::GuildMember *m) { return sender.id == m->user->id; });
-		bool allowed = std::find_if(member->roles.begin(), member->roles.end(), [](DiscordObjects::Role *r) { 
-			return r->name == "Admin" || r->name == "Moderator" || r->name == "Coder"; // TODO: customisation here
+		BotConfig &conf = config;
+		bool disallowed = std::find_if(member->roles.begin(), member->roles.end(), [conf](DiscordObjects::Role *r) -> bool { 
+			return conf.createjs_roles.count(r->name);
 		}) == member->roles.end(); // checks if the user has the required roles
 
-		if (!allowed) {
-			DiscordAPI::send_message(channel.id, ":warning: You do not have permission to use this command.");
+		if (disallowed) {
+			DiscordAPI::send_message(channel.id, ":warning: You do not have permission to use this command.", config.token, config.cert_location);
 			return;
 		}
 
@@ -543,16 +543,16 @@ void GatewayHandler::on_event_message_create(json data, client &c, websocketpp::
 			int result = CommandHelper::insert_command(channel.guild_id, command_name, script);
 			switch (result) {
 			case 0:
-				DiscordAPI::send_message(channel.id, ":warning: Error!"); break;
+				DiscordAPI::send_message(channel.id, ":warning: Error!", config.token, config.cert_location); break;
 			case 1:
-				DiscordAPI::send_message(channel.id, ":new: Command `" + command_name + "` successfully created."); break;
+				DiscordAPI::send_message(channel.id, ":new: Command `" + command_name + "` successfully created.", config.token, config.cert_location); break;
 			case 2:
-				DiscordAPI::send_message(channel.id, ":arrow_heading_up: Command `" + command_name + "` successfully updated."); break;
+				DiscordAPI::send_message(channel.id, ":arrow_heading_up: Command `" + command_name + "` successfully updated.", config.token, config.cert_location); break;
 			}
 		}
 	}
 	else if (words[0] == "`shutdown" && sender.id == "82232146579689472") { // it me
-		DiscordAPI::send_message(channel.id, ":zzz: Goodbye!");
+		DiscordAPI::send_message(channel.id, ":zzz: Goodbye!", config.token, config.cert_location);
 		for (auto &game : games) {
 			delete_game(game.first);
 		}
@@ -563,25 +563,25 @@ void GatewayHandler::on_event_message_create(json data, client &c, websocketpp::
 		if (words[1] == "channel" && words.size() == 3) {
 			auto it = channels.find(words[2]);
 			if (it == channels.end()) {
-				DiscordAPI::send_message(channel.id, ":question: Unrecognised channel.");
+				DiscordAPI::send_message(channel.id, ":question: Unrecognised channel.", config.token, config.cert_location);
 				return;
 			}
 
-			DiscordAPI::send_message(channel.id, it->second.to_debug_string());
+			DiscordAPI::send_message(channel.id, it->second.to_debug_string(), config.token, config.cert_location);
 		}
 		else if (words[1] == "guild" && words.size() == 3) {
 			auto it = guilds.find(words[2]);
 			if (it == guilds.end()) {
-				DiscordAPI::send_message(channel.id, ":question: Unrecognised guild.");
+				DiscordAPI::send_message(channel.id, ":question: Unrecognised guild.", config.token, config.cert_location);
 				return;
 			}
 
-			DiscordAPI::send_message(channel.id, it->second.to_debug_string());
+			DiscordAPI::send_message(channel.id, it->second.to_debug_string(), config.token, config.cert_location);
 		}
 		else if (words[1] == "member" && words.size() == 4) {
 			auto it = guilds.find(words[2]);
 			if (it == guilds.end()) {
-				DiscordAPI::send_message(channel.id, ":question: Unrecognised guild.");
+				DiscordAPI::send_message(channel.id, ":question: Unrecognised guild.", config.token, config.cert_location);
 				return;
 			}
 
@@ -590,27 +590,27 @@ void GatewayHandler::on_event_message_create(json data, client &c, websocketpp::
 				return user_id == member->user->id;
 			});
 			if (it2 == it->second.members.end()) {
-				DiscordAPI::send_message(channel.id, ":question: Unrecognised user.");
+				DiscordAPI::send_message(channel.id, ":question: Unrecognised user.", config.token, config.cert_location);
 				return;
 			}
 
-			DiscordAPI::send_message(channel.id, (*it2)->to_debug_string());
+			DiscordAPI::send_message(channel.id, (*it2)->to_debug_string(), config.token, config.cert_location);
 		}
 		else if (words[1] == "role" && words.size() == 3) {
 			auto it = roles.find(words[2]);
 			if (it == roles.end()) {
-				DiscordAPI::send_message(channel.id, ":question: Unrecognised role.");
+				DiscordAPI::send_message(channel.id, ":question: Unrecognised role.", config.token, config.cert_location);
 				return;
 			}
 
-			DiscordAPI::send_message(channel.id, it->second.to_debug_string());
+			DiscordAPI::send_message(channel.id, it->second.to_debug_string(), config.token, config.cert_location);
 		}
 		else if (words[1] == "role" && words.size() == 4) {
 			std::string role_name = words[3];
 
 			auto it = guilds.find(words[2]);
 			if (it == guilds.end()) {
-				DiscordAPI::send_message(channel.id, ":question: Unrecognised guild.");
+				DiscordAPI::send_message(channel.id, ":question: Unrecognised guild.", config.token, config.cert_location);
 				return;
 			}
 
@@ -618,14 +618,14 @@ void GatewayHandler::on_event_message_create(json data, client &c, websocketpp::
 				return role_name == r->name;
 			});
 			if (it2 == it->second.roles.end()) {
-				DiscordAPI::send_message(channel.id, ":question: Unrecognised role.");
+				DiscordAPI::send_message(channel.id, ":question: Unrecognised role.", config.token, config.cert_location);
 				return;
 			}
 			
-			DiscordAPI::send_message(channel.id, (*it2)->to_debug_string());
+			DiscordAPI::send_message(channel.id, (*it2)->to_debug_string(), config.token, config.cert_location);
 		}
 		else {
-			DiscordAPI::send_message(channel.id, ":question: Unknown parameters.");
+			DiscordAPI::send_message(channel.id, ":question: Unknown parameters.", config.token, config.cert_location);
 		}
 	}
 	else if (CommandHelper::get_command(channel.guild_id, words[0], custom_command)) {
@@ -635,13 +635,13 @@ void GatewayHandler::on_event_message_create(json data, client &c, websocketpp::
 		}
 
 		if (custom_command.script.length() == 0) {
-			DiscordAPI::send_message(channel.id, ":warning: Script has 0 length.");
+			DiscordAPI::send_message(channel.id, ":warning: Script has 0 length.", config.token, config.cert_location);
 			return;
 		}
 
 		auto it = v8_instances.find(channel.guild_id);
 		if (it == v8_instances.end()) {
-			DiscordAPI::send_message(channel.id, ":warning: No V8 instance exists for this server - it's our fault not yours!");
+			DiscordAPI::send_message(channel.id, ":warning: No V8 instance exists for this server - it's our fault not yours!", config.token, config.cert_location);
 			return;
 		}
 

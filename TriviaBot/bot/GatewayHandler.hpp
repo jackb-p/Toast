@@ -37,17 +37,19 @@ using json = nlohmann::json;
 *****************************************************************************************************************************/
 
 class TriviaGame;
-class APIHelper;
+class BotConfig;
 
 class GatewayHandler {
 public:
-	GatewayHandler();
+	GatewayHandler(BotConfig &c);
 
 	void handle_data(std::string data, client &c, websocketpp::connection_hdl &hdl);
 
 	void delete_game(std::string channel_id);
 
 private:
+	BotConfig &config;
+
 	int last_seq;
 	int heartbeat_interval;
 

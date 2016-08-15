@@ -8,10 +8,15 @@
 #include "ClientConnection.hpp"
 #include "Logger.hpp"
 #include "DiscordAPI.hpp"
-
-std::string bot_token;
+#include "BotConfig.hpp"
 
 int main(int argc, char *argv[]) {
+	BotConfig config;
+	if (config.is_new_config) {
+		Logger::write("Since the config.json file is newly generated, the program will exit now to allow you to edit it.", Logger::LogLevel::Info);
+		return 0;
+	}
+
 	curl_global_init(CURL_GLOBAL_DEFAULT);
 
 	v8::V8::InitializeICUDefaultLocation(argv[0]);
@@ -22,16 +27,8 @@ int main(int argc, char *argv[]) {
 
 	Logger::write("Initialised V8 and curl", Logger::LogLevel::Debug);
 
-	if (argc == 2) {
-		bot_token = argv[1];
-	}
-	else {
-		std::cout << "Please enter your bot token: " << std::endl;
-		std::cin >> bot_token;
-	}
-
 	std::string args = "/?v=5&encoding=json";
-	std::string url = DiscordAPI::get_gateway().value("url", "wss://gateway.discord.gg");
+	std::string url = DiscordAPI::get_gateway(config.cert_location).value("url", "wss://gateway.discord.gg");
 
 	bool retry = true;
 	int exit_code = 0;
@@ -39,7 +36,7 @@ int main(int argc, char *argv[]) {
 		retry = false;
 
 		try {
-			ClientConnection conn;
+			ClientConnection conn(config);
 			conn.start(url + args);
 		}
 		catch (const std::exception &e) {
@@ -65,5 +62,6 @@ int main(int argc, char *argv[]) {
 
 	Logger::write("Cleaned up", Logger::LogLevel::Info);
 
+	std::getchar();
 	return exit_code;
 }
