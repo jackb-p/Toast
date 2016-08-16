@@ -7,6 +7,8 @@ project(TriviaBot)
 
 file(GLOB_RECURSE sources bot/*.cpp bot/*.hpp ../lib/sqlite3/sqlite3.c)
 
+link_directories(../lib/v8/lib)
+
 ###############################################################################
 ## target definitions #########################################################
 ###############################################################################
@@ -29,8 +31,14 @@ target_link_libraries(TriviaBot PUBLIC
   ${Boost_LIBRARIES}
   ${OPENSSL_LIBRARIES}
   ${CURL_LIBRARIES}
-  pthread
+  v8
+  v8_libplatform
+  v8_libbase
+  icui18n
+  icuuc
+  rt
   dl
+  pthread
 )
 
 include_directories(
@@ -39,7 +47,10 @@ include_directories(
   ${CURL_INCLUDE_DIR}
   ../lib/websocketpp
   ../lib/sqlite3
+  ../lib/v8
 )
 
 # don't know if necessary, too scared to remove
 add_definitions(-D_WEBSOCKETPP_CPP11_STL_)
+
+set(CMAKE_BUILD_TYPE Release)

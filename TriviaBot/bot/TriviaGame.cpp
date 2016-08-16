@@ -10,12 +10,13 @@
 #include <boost/regex.hpp>
 
 #include "GatewayHandler.hpp"
-#include "APIHelper.hpp"
+#include "DiscordAPI.hpp"
 #include "data_structures/User.hpp"
+#include "Logger.hpp"
+#include "BotConfig.hpp"
 
-TriviaGame::TriviaGame(GatewayHandler *gh, APIHelper *ah, std::string channel_id, int total_questions, int delay) : interval(delay) {
+TriviaGame::TriviaGame(BotConfig &c, GatewayHandler *gh, std::string channel_id, int total_questions, int delay) : config(c), interval(delay) {
 	this->gh = gh;
-	this->ah = ah;
 	this->channel_id = channel_id;
 
 	this->total_questions = total_questions;
@@ -26,7 +27,7 @@ TriviaGame::~TriviaGame() {
 	current_thread.reset();
 
 	if (scores.size() == 0) {
-		ah->send_message(channel_id, ":red_circle: Game cancelled!");
+		DiscordAPI::send_message(channel_id, ":red_circle: Game cancelled!", config.token, config.cert_location);
 		return;
 	}
 
@@ -50,13 +51,13 @@ TriviaGame::~TriviaGame() {
 		average_time.pop_back(); average_time.pop_back(); average_time.pop_back();
 		message += ":small_blue_diamond: <@!" + p.first + ">: " + std::to_string(p.second) + " (Avg: " + average_time + " seconds)\n";
 	}
-	ah->send_message(channel_id, message);
+	DiscordAPI::send_message(channel_id, message, config.token, config.cert_location);
 
 	sqlite3 *db; int rc; std::string sql;
 
 	rc = sqlite3_open("bot/db/trivia.db", &db);
 	if (rc) {
-		std::cerr << "Cant't open database: " << sqlite3_errmsg(db) << std::endl;
+		Logger::write("Can't open database: " + *sqlite3_errmsg(db), Logger::LogLevel::Severe);
 	}
 
 	std::string sql_in_list;
@@ -71,7 +72,7 @@ TriviaGame::~TriviaGame() {
 
 	rc = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, 0);
 	if (rc != SQLITE_OK) {
-		std::cerr << "SQL error." << std::endl;
+		Logger::write("Error creating prepared statement: " + *sqlite3_errmsg(db), Logger::LogLevel::Severe);
 	}
 
 	// insert arguments
@@ -79,7 +80,7 @@ TriviaGame::~TriviaGame() {
 		rc = sqlite3_bind_text(stmt, i + 1, pairs[i].first.c_str(), -1, (sqlite3_destructor_type) -1);
 
 		if (rc != SQLITE_OK) {
-			std::cerr << "SQL error." << std::endl;
+			Logger::write("Error binding prepared statement argument: " + *sqlite3_errmsg(db), Logger::LogLevel::Severe);
 			break;
 		}
 	}
@@ -97,7 +98,7 @@ TriviaGame::~TriviaGame() {
 			data[id] = std::pair<int, int>(total_score, average_time);
 		} else if (rc != SQLITE_DONE) {
 			sqlite3_finalize(stmt);
-			std::cerr << "SQLite error." << std::endl;
+			Logger::write("Error fetching results: " + *sqlite3_errmsg(db), Logger::LogLevel::Severe);
 			break;
 		}
 	}
@@ -105,7 +106,7 @@ TriviaGame::~TriviaGame() {
 
 	std::string update_sql;
 	if (data.size() < scores.size()) { // some users dont have entries yet
-		std::string sql = "INSERT INTO TotalScores (User, TotalScore, AverageTime) VALUES ";
+		sql = "INSERT INTO TotalScores (User, TotalScore, AverageTime) VALUES ";
 		for (auto &i : scores) {
 			if (data.find(i.first) == data.end()) {
 				sql += "(?, ?, ?),";
@@ -116,7 +117,7 @@ TriviaGame::~TriviaGame() {
 
 		rc = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, 0);
 		if (rc != SQLITE_OK) {
-			std::cerr << "SQL error." << std::endl;
+			Logger::write("Error creating prepared statement: " + *sqlite3_errmsg(db), Logger::LogLevel::Severe);
 		}
 
 		int count = 1;
@@ -140,7 +141,7 @@ TriviaGame::~TriviaGame() {
 	if (update_sql != "") {
 		rc = sqlite3_prepare_v2(db, update_sql.c_str(), -1, &stmt, 0);
 		if (rc != SQLITE_OK) {
-			std::cerr << "SQL error." << std::endl;
+			Logger::write("Error creating prepared statement: " + *sqlite3_errmsg(db), Logger::LogLevel::Severe);
 		}
 
 		int index = 1;
@@ -180,16 +181,15 @@ void TriviaGame::question() {
 		/// open db
 		rc = sqlite3_open("bot/db/trivia.db", &db);
 		if (rc) {
-			std::cerr << "Cant't open database: " << sqlite3_errmsg(db) << std::endl;
+			Logger::write("Error opening database: " + *sqlite3_errmsg(db), Logger::LogLevel::Severe);
 		}
 
 		// prepare statement
 		sqlite3_stmt *stmt;
 		sql = "SELECT * FROM Questions ORDER BY RANDOM() LIMIT 1;";
 		rc = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, 0);
-
 		if (rc != SQLITE_OK) {
-			std::cerr << "SQL error." << std::endl;
+			Logger::write("Error creating prepared statement: " + *sqlite3_errmsg(db), Logger::LogLevel::Severe);
 		}
 
 		rc = sqlite3_step(stmt);
@@ -205,16 +205,17 @@ void TriviaGame::question() {
 			boost::split(current_answers, answer, boost::is_any_of("*"));
 
 		}
-		else if (rc != SQLITE_DONE) {
+		else {
 			sqlite3_finalize(stmt);
-			std::cerr << "SQLite error." << std::endl;
+			Logger::write("Error fetching question: " + *sqlite3_errmsg(db), Logger::LogLevel::Severe);
 		}
 
 		sqlite3_finalize(stmt);
 		sqlite3_close(db);
 
 		questions_asked++;
-		ah->send_message(channel_id, ":question: **(" + std::to_string(questions_asked) + "/" + std::to_string(total_questions) + ")** " + current_question);
+		DiscordAPI::send_message(channel_id, ":question: **(" + std::to_string(questions_asked) + "/" + std::to_string(total_questions) + ")** " + current_question,
+			config.token, config.cert_location);
 		question_start = boost::posix_time::microsec_clock::universal_time();
 
 		give_hint(0, "");
@@ -253,8 +254,8 @@ void TriviaGame::give_hint(int hints_given, std::string hint) {
 
 				// count number of *s
 				int length = 0;
-				for (unsigned int i = 0; i < word.length(); i++) {
-					if (word[i] == hide_char) {
+				for (unsigned int j = 0; j < word.length(); j++) {
+					if (word[j] == hide_char) {
 						length++;
 					}
 				}
@@ -281,11 +282,11 @@ void TriviaGame::give_hint(int hints_given, std::string hint) {
 		hints_given++; // now equal to the amount of [hide_char]s that need to be present in each word
 	
 		if (print) {
-			ah->send_message(channel_id, ":small_orange_diamond: Hint: **`" + hint + "`**");
+			DiscordAPI::send_message(channel_id, ":small_orange_diamond: Hint: **`" + hint + "`**", config.token, config.cert_location);
 		}
 	}
 	boost::this_thread::sleep(interval);
-	ah->send_message(channel_id, ":exclamation: Question failed. Answer: ** `" + *current_answers.begin() + "` **");
+	DiscordAPI::send_message(channel_id, ":exclamation: Question failed. Answer: ** `" + *current_answers.begin() + "` **", config.token, config.cert_location);
 }
 
 void TriviaGame::handle_answer(std::string answer, DiscordObjects::User sender) {
@@ -300,7 +301,7 @@ void TriviaGame::handle_answer(std::string answer, DiscordObjects::User sender) 
 		// remove the last three 0s
 		time_taken.pop_back(); time_taken.pop_back(); time_taken.pop_back();
 
-		ah->send_message(channel_id, ":heavy_check_mark: <@!" + sender.id + "> You got it! (" + time_taken + " seconds)");
+		DiscordAPI::send_message(channel_id, ":heavy_check_mark: <@!" + sender.id + "> You got it! (" + time_taken + " seconds)", config.token, config.cert_location);
 
 		increase_score(sender.id);
 		update_average_time(sender.id, diff.total_milliseconds());

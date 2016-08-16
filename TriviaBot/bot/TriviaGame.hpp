@@ -11,15 +11,14 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 class GatewayHandler;
-class APIHelper;
+class BotConfig;
 namespace DiscordObjects {
 	class User;
 }
 
-
 class TriviaGame {
 public:
-	TriviaGame(GatewayHandler *gh, APIHelper *ah, std::string channel_id, int total_questions, int delay);
+	TriviaGame(BotConfig &c, GatewayHandler *gh, std::string channel_id, int total_questions, int delay);
 	~TriviaGame();
 
 	void start();
@@ -27,6 +26,8 @@ public:
 	void handle_answer(std::string answer, DiscordObjects::User sender);
 
 private:
+	BotConfig &config;
+
 	int questions_asked;
 	int total_questions;
 	boost::posix_time::seconds interval;
@@ -38,7 +39,6 @@ private:
 
 	std::string channel_id;
 	GatewayHandler *gh;
-	APIHelper *ah;
 
 	const char hide_char = '#';
 

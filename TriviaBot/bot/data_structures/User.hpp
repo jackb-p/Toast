@@ -2,6 +2,7 @@
 #define BOT_DATA__STRUCTURES_USER
 
 #include <string>
+#include <vector>
 
 #include "../json/json.hpp"
 
@@ -37,14 +38,21 @@ namespace DiscordObjects {
 		std::string avatar;
 		bool bot;
 		bool mfa_enabled;
+
+		// presence
+		std::string game;
+		std::string status;
+
+		std::vector<std::string> guilds;
 	};
 
 	inline User::User() {
-		id = username = discriminator = avatar = "null";
+		id = username = discriminator = avatar = game = "null";
+		status = "offline";
 		bot = mfa_enabled = false;
 	}
 
-	inline User::User(json data) {
+	inline User::User(json data) : User() {
 		load_from_json(data);
 	}
 

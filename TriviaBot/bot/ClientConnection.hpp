@@ -5,6 +5,8 @@
 #include <websocketpp/config/asio_client.hpp>
 #include "json/json.hpp"
 
+#include "GatewayHandler.hpp"
+
 typedef websocketpp::client<websocketpp::config::asio_tls_client> client;
 
 using websocketpp::lib::bind;
@@ -14,14 +16,19 @@ typedef websocketpp::config::asio_tls_client::message_type::ptr message_ptr;
 typedef websocketpp::lib::shared_ptr<boost::asio::ssl::context> context_ptr;
 typedef client::connection_ptr connection_ptr;
 
-#include "GatewayHandler.hpp"
+class BotConfig;
 
 class ClientConnection {
 public:
-	ClientConnection();
+	ClientConnection(BotConfig &c);
 
 	// Open a connection to the URI provided
 	void start(std::string uri);
+
+private:
+	client cli;
+	BotConfig &config;
+	GatewayHandler gh;
 
 	// Event handlers
 	void on_socket_init(websocketpp::connection_hdl);
@@ -30,10 +37,6 @@ public:
 	void on_open(websocketpp::connection_hdl hdl);
 	void on_message(websocketpp::connection_hdl hdl, message_ptr message);
 	void on_close(websocketpp::connection_hdl);
-
-private:
-	client c;
-	std::unique_ptr<GatewayHandler> gh;
 };
 
 #endif

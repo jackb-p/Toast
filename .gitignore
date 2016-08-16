@@ -9,3 +9,15 @@
 # Data files
 /TriviaBot/data_management/questions
 /TriviaBot/bot/db/trivia.db
+
+# Config file
+config.json
+
+# Compiled sqlite file
+sqlite3.obj
+
+# V8 lib
+lib/v8
+
+# Built files
+build/
