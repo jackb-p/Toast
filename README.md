@@ -1,4 +1,4 @@
-#trivia-bot <img src="https://cdn.discordapp.com/attachments/164732409919569920/205700949304541184/emoji.png" width="30" height="30" /> <img src="https://travis-ci.org/jackb-p/trivia-bot.svg?branch=release" />
+#trivia-bot <img src="https://cdn.discordapp.com/attachments/164732409919569920/205700949304541184/emoji.png" width="30" height="30" /> <img src="http://vps307652.ovh.net:8080/buildStatus/icon?job=trivia-bot" />
 
 A bot which provides a Trivia game for [Discord](https://discordapp.com/).
 
