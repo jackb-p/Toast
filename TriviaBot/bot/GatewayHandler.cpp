@@ -519,7 +519,7 @@ void GatewayHandler::on_event_message_create(json data, client &c, websocketpp::
 		});
 		BotConfig &conf = config;
 		bool disallowed = std::find_if(member->roles.begin(), member->roles.end(), [conf](DiscordObjects::Role *r) -> bool {
-			return conf.createjs_roles.count(r->name);
+			return conf.js_allowed_roles.count(r->name);
 		}) == member->roles.end(); // checks if the user has the required roles
 
 		if (disallowed) {
@@ -537,7 +537,7 @@ void GatewayHandler::on_event_message_create(json data, client &c, websocketpp::
 		auto &member = *std::find_if(guild.members.begin(), guild.members.end(), [sender](DiscordObjects::GuildMember *m) { return sender.id == m->user->id; });
 		BotConfig &conf = config;
 		bool disallowed = std::find_if(member->roles.begin(), member->roles.end(), [conf](DiscordObjects::Role *r) -> bool { 
-			return conf.createjs_roles.count(r->name);
+			return conf.js_allowed_roles.count(r->name);
 		}) == member->roles.end(); // checks if the user has the required roles
 
 		if (disallowed) {
