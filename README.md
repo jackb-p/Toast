@@ -24,11 +24,13 @@ The config file is automatically generated if it is not present. The JSON format
 The current configuration options are as follows:
 
 1. **General**
-  * `api_cert_file`: The path to the Discord API .crt file for HTTPS.
-  * `bot_token`: Your Discord bot token.
-  * `owner_id`: The user ID of the owner of the bot. This allows owner-only (maintenance) commands, such as `shutdown`.
-2. **V8**
-  * `createjs_allowed_roles`: List of role names which are allowed to use the `createjs` command.
+
+| Field | Description |
+| --- | --- |
+| `api_cert_file` | The path to the Discord API .crt file for HTTPS. |
+| `bot_token` | Your Discord bot token. |
+| `owner_id` | The user ID of the owner of the bot. This allows owner-only (maintenance) commands, such as `shutdown`. |
+| `js_allowed_roles` | List of role names which are allowed to use the `createjs` ands `js` commands. |
 
 ### Trivia Questions
 Questions are obtained from [trivia-db on Sourceforge](https://sourceforge.net/projects/triviadb/).
