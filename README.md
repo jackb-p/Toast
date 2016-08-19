@@ -1,4 +1,4 @@
-#trivia-bot <img src="https://cdn.discordapp.com/attachments/164732409919569920/205700949304541184/emoji.png" width="30" height="30" /> <img src="https://travis-ci.org/jackb-p/trivia-bot.svg?branch=release" />
+#trivia-bot <img src="https://cdn.discordapp.com/attachments/164732409919569920/205700949304541184/emoji.png" width="30" height="30" /> <img src="http://vps307652.ovh.net:8080/buildStatus/icon?job=trivia-bot" />
 
 A bot which provides a Trivia game for [Discord](https://discordapp.com/).
 
@@ -10,7 +10,7 @@ It requires no special permissions at this time (only read/write to channels).
 
 
 ### Installation
-[Releases](https://github.com/jackb-p/trivia-bot/releases) are available for tagged versions. These are compiled on Ubuntu by Travis CI. To run on other systems you will need to compile yourself - a CMake configuration is included. Windows releases will happen one day.
+[Releases](https://github.com/jackb-p/trivia-bot/releases) are available for tagged versions. These are compiled on Debian Jessie by Jenkins. Note that you still require the dependency library files, so you will still have to build V8 and add it to your `LD_LIBRARY_PATH`. To run on other systems you will need to compile yourself - a CMake configuration is included. Windows releases will happen one day.
 
 If you want to install a version for which a release does not exist, you will also have to compile manually. Compilation instructions are available for Linux below.
 
@@ -18,7 +18,19 @@ If you want to install a version for which a release does not exist, you will al
 ### Running
 To run simply execute the program: `./TriviaBot`
 
-If you do not want to be prompted for your token every launch, provide it as an argument: `./TriviaBot {TOKEN}`
+#### Configuration
+The config file is automatically generated if it is not present. The JSON format is used. You must edit the config file for the bot to work correctly, the bot token is required.
+
+The current configuration options are as follows:
+
+1. **General**
+
+| Field | Description |
+| --- | --- |
+| `api_cert_file` | The path to the Discord API .crt file for HTTPS. |
+| `bot_token` | Your Discord bot token. |
+| `owner_id` | The user ID of the owner of the bot. This allows owner-only (maintenance) commands, such as `shutdown`. |
+| `js_allowed_roles` | List of role names which are allowed to use the `createjs` ands `js` commands. |
 
 ### Trivia Questions
 Questions are obtained from [trivia-db on Sourceforge](https://sourceforge.net/projects/triviadb/).
@@ -30,6 +42,7 @@ LoadDB.cpp takes some time to execute.
 
 
 ### Commands
+#### Trivia Game
 `` `trivia`` is the base command.
 
 | Argument | Description |
@@ -38,6 +51,10 @@ LoadDB.cpp takes some time to execute.
 | stop | Stops the trivia game currently in the channel the message is sent from, if there is one. |
 | help | Prints a help list, similar to this table. |
 
+#### Javascript Commands
+The Javascript system is designed to mirror the old [Boobot implementation](https://www.boobot.party/). For now there are some exceptions:
+1. Message objects aren't implemented.
+2. Properties are not case sensitive. You must use `server.Name`, not `server.name`. This will not be changed.
 
 ### Compiling
 #### Dependencies
@@ -48,15 +65,16 @@ LoadDB.cpp takes some time to execute.
 | cURL | [curl.haxx.se](https://curl.haxx.se/) | |
 | sqlite3 | [sqlite.org](https://www.sqlite.org/) | Included as submodule. Uses a [different repo](https://github.com/azadkuh/sqlite-amalgamation/). |
 | nlohmann/json | [nlohmann/json](https://github.com/nlohmann/json) | (Slightly modified) source file included in repo. |
-| V8 | [Google V8](https://developers.google.com/v8/) | Debian/Ubuntu `libv8` packages are too outdated. |
+| V8 | [Google V8](https://developers.google.com/v8/) | Debian/Ubuntu `libv8` packages are too outdated. Must be built manually. |
 
-#### Linux (debian)
-c++14 support is required. gcc 5 and above recommended.
+#### Linux (Debian)
+c++14 support is required. gcc 5 and above recommended, however it compiles on 4.9.2 (and possibly some versions below.)
 
 1. Clone the github repo: `git clone https://github.com/jackb-p/TriviaDiscord.git TriviaDiscord`
 2. Navigate to repository directory: `cd TriviaDiscord`
 3. Clone the submodules: `git submodule init` and `git submodule update`
-4. Install other dependencies: `sudo apt-get install cmake libboost-all-dev libcurl-dev` (Package managers and names may vary, but all of these should be easy to find through a simple Google search.)
-5. `cd TriviaBot`
-6. `cmake .`
-7. `make`
+4. Install other dependencies: `sudo apt-get install build-essential cmake libboost-all-dev libcurl4-openssl-dev libssl-dev` (Package managers and names may vary, but all of these should be easy to find through a simple Google search.) V8 may require other dependencies.
+5. Build V8. Put the library files into lib/v8/lib/ and the include files into lib/v8/include. More instructions will be added at some point for this step.
+6. `cd TriviaBot`
+7. `cmake .`
+8. `make`
