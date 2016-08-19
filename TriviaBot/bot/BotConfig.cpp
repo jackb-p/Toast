@@ -34,7 +34,7 @@ void BotConfig::load_from_json(std::string data) {
 	owner_id = parsed.value("owner_id", "");
 	cert_location = parsed.value("api_cert_file", "bot/http/DiscordCA.crt");
 
-	createjs_roles = parsed["v8"].value("createjs_allowed_roles", std::unordered_set<std::string> { "Admin", "Coder" });
+	js_allowed_roles = parsed["v8"].value("js_allowed_roles", std::unordered_set<std::string> { "Admin", "Coder" });
 
 	Logger::write("config.json file loaded", Logger::LogLevel::Info);
 }
@@ -45,7 +45,7 @@ void BotConfig::create_new_file() {
 		{ "owner_id", "" },
 		{ "api_cert_file", "bot/http/DiscordCA.crt" },
 		{ "v8", {
-			{ "createjs_allowed_roles", {
+			{ "js_allowed_roles", {
 				"Admin", "Coder", "Bot Commander"
 			} }
 		} }
