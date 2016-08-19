@@ -517,16 +517,6 @@ void GatewayHandler::on_event_message_create(json data, client &c, websocketpp::
 		DiscordObjects::GuildMember *member = *std::find_if(guild.members.begin(), guild.members.end(), [sender](DiscordObjects::GuildMember *m) {
 			return sender.id == m->user->id;
 		});
-		BotConfig &conf = config;
-		bool disallowed = std::find_if(member->roles.begin(), member->roles.end(), [conf](DiscordObjects::Role *r) -> bool {
-			return conf.createjs_roles.count(r->name);
-		}) == member->roles.end(); // checks if the user has the required roles
-
-		if (disallowed) {
-			DiscordAPI::send_message(channel.id, ":warning: You do not have permission to use this command.", config.token, config.cert_location);
-			return;
-		}
-
 		std::string js = message.substr(4);
 		auto it = v8_instances.find(channel.guild_id);
 		if (it != v8_instances.end() && js.length() > 0) {

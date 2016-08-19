@@ -13,7 +13,7 @@ public:
 	std::string token;
 	std::string owner_id;
 	std::string cert_location;
-	std::unordered_set<std::string> js_allowed_roles;
+	std::unordered_set<std::string> createjs_roles;
 
 private:
 	void load_from_json(std::string data);
