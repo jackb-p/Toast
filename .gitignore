@@ -1,14 +1,14 @@
 # VS files
 /.vs/
-/TriviaBot.sln
-/TriviaBot.VC*
-/TriviaBot/TriviaBot.vcxproj*
-/TriviaBot/x64/
+/Toast.sln
+/Toast.VC*
+/Toast/Toast.vcxproj*
+/Toast/x64/
 /x64/
 
 # Data files
-/TriviaBot/data_management/questions
-/TriviaBot/bot/db/trivia.db
+/Toast/data_management/questions
+/Toast/bot/db/trivia.db
 
 # Config file
 config.json

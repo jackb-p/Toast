@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.7)
-project(TriviaBot)
+project(Toast)
 
 ###############################################################################
 ## get source ## ##############################################################
@@ -14,7 +14,7 @@ link_directories(../lib/v8/lib)
 ###############################################################################
 
 # add the data to the target, so it becomes visible in some IDE
-add_executable(TriviaBot ${sources})
+add_executable(Toast ${sources})
 
 # add some compiler flags
 set (CMAKE_CXX_FLAGS "-std=c++14 -Wall ${CMAKE_CXX_FLAGS}")
@@ -27,7 +27,7 @@ find_package(Boost COMPONENTS system thread regex REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(CURL REQUIRED)
 
-target_link_libraries(TriviaBot PUBLIC
+target_link_libraries(Toast PUBLIC
   ${Boost_LIBRARIES}
   ${OPENSSL_LIBRARIES}
   ${CURL_LIBRARIES}

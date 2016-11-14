@@ -1,4 +1,4 @@
-#trivia-bot <img src="https://cdn.discordapp.com/attachments/164732409919569920/205700949304541184/emoji.png" width="30" height="30" /> <img src="http://vps307652.ovh.net:8080/buildStatus/icon?job=trivia-bot" />
+# Toast <img src="https://www.ahealthiermichigan.org/wp-content/uploads/2014/09/Transform-toast-into-breakfast.jpg" width="30" height="30" />
 
 A bot which provides a Trivia game for [Discord](https://discordapp.com/).
 
@@ -16,7 +16,7 @@ If you want to install a version for which a release does not exist, you will al
 
 
 ### Running
-To run simply execute the program: `./TriviaBot`
+To run simply execute the program: `./Toast`
 
 #### Configuration
 The config file is automatically generated if it is not present. The JSON format is used. You must edit the config file for the bot to work correctly, the bot token is required.
@@ -53,8 +53,9 @@ LoadDB.cpp takes some time to execute.
 
 #### Javascript Commands
 The Javascript system is designed to mirror the old [Boobot implementation](https://www.boobot.party/). For now there are some exceptions:
+
 1. Message objects aren't implemented.
-2. Properties are not case sensitive. You must use `server.Name`, not `server.name`. This will not be changed.
+2. Properties *are* case sensitive. You must use `server.Name`, not `server.name`. This will not be changed.
 
 ### Compiling
 #### Dependencies
@@ -70,11 +71,11 @@ The Javascript system is designed to mirror the old [Boobot implementation](http
 #### Linux (Debian)
 c++14 support is required. gcc 5 and above recommended, however it compiles on 4.9.2 (and possibly some versions below.)
 
-1. Clone the github repo: `git clone https://github.com/jackb-p/TriviaDiscord.git TriviaDiscord`
-2. Navigate to repository directory: `cd TriviaDiscord`
+1. Clone the github repo: `git clone https://github.com/jackb-p/Toast.git ToastBot`
+2. Navigate to repository directory: `cd ToastBot`
 3. Clone the submodules: `git submodule init` and `git submodule update`
 4. Install other dependencies: `sudo apt-get install build-essential cmake libboost-all-dev libcurl4-openssl-dev libssl-dev` (Package managers and names may vary, but all of these should be easy to find through a simple Google search.) V8 may require other dependencies.
 5. Build V8. Put the library files into lib/v8/lib/ and the include files into lib/v8/include. More instructions will be added at some point for this step.
-6. `cd TriviaBot`
+6. `cd Toast`
 7. `cmake .`
 8. `make`
