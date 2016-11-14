@@ -511,7 +511,7 @@ void GatewayHandler::on_event_message_create(json data, client &c, websocketpp::
 		DiscordAPI::send_message(channel.id, m, config.token, config.cert_location);
 	}
 	else if (words[0] == "`info") {
-		DiscordAPI::send_message(channel.id, ":information_source: **trivia-bot** by Jack. <http://github.com/jackb-p/TriviaDiscord>", config.token, config.cert_location);
+		DiscordAPI::send_message(channel.id, ":information_source: **toast** by Jack. <http://github.com/jackb-p/Toast>", config.token, config.cert_location);
 	}
 	else if (words[0] == "~js" && words.size() > 1) {
 		DiscordObjects::GuildMember *member = *std::find_if(guild.members.begin(), guild.members.end(), [sender](DiscordObjects::GuildMember *m) {
