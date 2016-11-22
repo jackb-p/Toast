@@ -368,6 +368,10 @@ void V8Instance::js_get_user(Local<Name> property, const PropertyCallbackInfo<Va
 		std::string name = member->nick == "null" ? member->user->username : member->nick;
 		info.GetReturnValue().Set(String::NewFromUtf8(info.GetIsolate(), name.c_str(), NewStringType::kNormal).ToLocalChecked());
 	}
+	else if (property_s == "TrueName") { // ignores nick
+		std::string name = member->user->username;
+		info.GetReturnValue().Set(String::NewFromUtf8(info.GetIsolate(), name.c_str(), NewStringType::kNormal).ToLocalChecked());
+	}
 	else if (property_s == "Mention") {
 		std::string mention = "<@" + member->user->id + ">";
 		info.GetReturnValue().Set(String::NewFromUtf8(info.GetIsolate(), mention.c_str(), NewStringType::kNormal).ToLocalChecked());
